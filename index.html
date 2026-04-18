@@ -4,43 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AttendX | Attendance Management System</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        
         .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes scan-bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(240px); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .scan-line { animation: scan-bounce 2s infinite ease-in-out; }
-
-        .chart-bar { animation: grow-up 1s ease-out forwards; }
-        @keyframes grow-up {
-            from { height: 0; }
-            to { height: var(--target-height); }
-        }
-
-        #qrcode img {
-            margin: 0 auto;
-            border: 8px solid white;
-            border-radius: 12px;
-        }
-
-        /* Custom Scrollbar */
+        @keyframes scan-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(240px); } }
+        #qrcode img { margin: 0 auto; border: 8px solid white; border-radius: 12px; }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
@@ -50,9 +25,7 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-slate-900 text-white p-6 fixed h-full flex flex-col border-r border-slate-800 z-30">
             <div class="flex items-center gap-3 mb-10 px-2">
-                <div class="bg-blue-600 p-2 rounded-lg">
-                    <i data-lucide="user-check" class="w-6 h-6"></i>
-                </div>
+                <div class="bg-blue-600 p-2 rounded-lg"><i data-lucide="user-check" class="w-6 h-6"></i></div>
                 <h1 class="font-bold text-xl tracking-tight">AttendX</h1>
             </div>
             
@@ -67,11 +40,11 @@
                 </button>
                 <button onclick="switchView('students')" id="btn-students" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="users" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">Students</span>
+                    <span class="font-medium text-sm">Student Registry</span>
                 </button>
                 <button onclick="switchView('sessions')" id="btn-sessions" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">Sessions</span>
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                    <span class="font-medium text-sm">Past Sessions</span>
                 </button>
                 <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Integrations</div>
                 <button onclick="switchView('zoom')" id="btn-zoom" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
@@ -80,10 +53,14 @@
                 </button>
             </nav>
 
-            <div class="mt-auto pt-4 border-t border-slate-800">
-                <button onclick="switchView('scanner')" id="btn-scanner" class="nav-link w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-sm font-medium border border-slate-700 transition-colors">
+            <div class="mt-auto pt-4 border-t border-slate-800 space-y-2">
+                <button onclick="downloadCSVTemplate()" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-[11px] font-bold text-blue-400 border border-slate-700 transition-colors">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    CSV Template
+                </button>
+                <button onclick="switchView('scanner')" id="btn-scanner" class="nav-link w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-sm font-medium transition-colors">
                     <i data-lucide="qr-code" class="w-4 h-4"></i>
-                    Student Scan Mode
+                    Scanner Terminal
                 </button>
             </div>
         </aside>
@@ -92,15 +69,15 @@
         <main class="ml-64 flex-1 p-8">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 id="page-title" class="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
-                    <p id="page-subtitle" class="text-slate-500 text-sm">Real-time attendance tracking & analytics.</p>
+                    <h2 id="page-title" class="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
+                    <p id="page-subtitle" class="text-slate-500 text-sm">Monitoring system metrics.</p>
                 </div>
                 <div id="header-actions" class="flex gap-3">
-                    <input type="file" id="excel-upload" class="hidden" accept=".csv, .xlsx, .xls" onchange="handleFileUpload(event)">
-                    <button onclick="document.getElementById('excel-upload').click()" class="flex items-center gap-2 bg-white px-4 py-2 border rounded-lg text-sm font-medium hover:bg-slate-50 transition-all shadow-sm">
-                        <i data-lucide="file-up" class="w-4 h-4 text-green-600"></i>
-                        Upload Student Sheet
+                    <button onclick="document.getElementById('csv-upload').click()" class="flex items-center gap-2 bg-slate-900 px-4 py-2 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        Batch Import
                     </button>
+                    <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="handleStudentCSVImport(event)">
                     <button onclick="openCreateCourseModal()" class="flex items-center gap-2 bg-blue-600 px-4 py-2 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition-all">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                         Add Course
@@ -112,20 +89,9 @@
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="course-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 transform transition-all scale-95 opacity-0" id="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Create New Course</h3>
-                <button onclick="closeCreateCourseModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="new-course-code" placeholder="Course Code (e.g. CS101)" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="new-course-name" placeholder="Course Title" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="new-course-instructor" placeholder="Instructor Name" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="saveCourse()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all">Create Course</button>
-            </div>
-        </div>
+    <!-- Universal Modal -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 transform transition-all scale-95 opacity-0" id="modal-body"></div>
     </div>
 
     <!-- Toast -->
@@ -135,45 +101,66 @@
     </div>
 
     <script>
-        // --- STATE ---
+        // --- DATA STORE ---
+        const totalSessionsPerCourse = 20;
+
         let students = [
-            { id: '2024-001', name: 'Alice Smith', email: 'alice@uni.edu', rate: 92, lastSeen: '10 mins ago', course: 'CS101' },
-            { id: '2024-002', name: 'Bob Johnson', email: 'bob@uni.edu', rate: 88, lastSeen: '2 hours ago', course: 'CS101' },
-            { id: '2024-003', name: 'Charlie Brown', email: 'charlie@uni.edu', rate: 45, lastSeen: '1 day ago', course: 'PHY201' },
-            { id: '2024-004', name: 'Diana Prince', email: 'diana@uni.edu', rate: 98, lastSeen: 'Now', course: 'MATH301' }
+            { 
+                matric: '2024-001', 
+                firstName: 'Alice', 
+                lastName: 'Smith', 
+                email: 'alice@uni.edu', 
+                phone: '+123456789',
+                picture: 'https://i.pravatar.cc/150?u=alice',
+                rate: 92, 
+                course: 'CS101' 
+            },
+            { 
+                matric: '2024-002', 
+                firstName: 'Bob', 
+                lastName: 'Johnson', 
+                email: 'bob@uni.edu', 
+                phone: '+123456780',
+                picture: 'https://i.pravatar.cc/150?u=bob',
+                rate: 71, 
+                course: 'CS101' 
+            },
+            { 
+                matric: '2024-003', 
+                firstName: 'Charlie', 
+                lastName: 'Brown', 
+                email: 'charlie@uni.edu', 
+                phone: '+123456781',
+                picture: 'https://i.pravatar.cc/150?u=charlie',
+                rate: 58, 
+                course: 'PHY201' 
+            }
         ];
 
         let courses = [
-            { code: 'CS101', name: 'Intro to Computer Science', instructor: 'Dr. Alan Turing', students: 45 },
-            { code: 'PHY201', name: 'Applied Physics', instructor: 'Dr. Marie Curie', students: 32 },
-            { code: 'MATH301', name: 'Advanced Calculus', instructor: 'Prof. Isaac Newton', students: 28 }
+            { code: 'CS101', name: 'Intro to Computer Science', instructor: 'Dr. Alan Turing' },
+            { code: 'PHY201', name: 'Applied Physics', instructor: 'Dr. Marie Curie' }
         ];
 
-        let activeSession = null;
         let logs = [];
+        let activeSession = null;
 
         // --- NAVIGATION ---
         function switchView(view) {
             const container = document.getElementById('view-container');
             const title = document.getElementById('page-title');
             const subtitle = document.getElementById('page-subtitle');
-            const headerActions = document.getElementById('header-actions');
             
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('bg-blue-600', 'text-white', 'bg-slate-800');
-                link.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
-            });
-
-            headerActions.style.display = (view === 'scanner' || view === 'active-session') ? 'none' : 'flex';
-
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('bg-blue-600', 'text-white', 'bg-slate-800'));
+            
             if (view === 'dashboard') {
                 title.innerText = "Admin Dashboard";
-                subtitle.innerText = "Real-time attendance tracking & analytics.";
+                subtitle.innerText = "General Report and Compliance Monitoring.";
                 document.getElementById('btn-dashboard').classList.add('bg-blue-600', 'text-white');
                 renderDashboard(container);
             } else if (view === 'courses') {
-                title.innerText = "Course Management";
-                subtitle.innerText = "Organize modules and manage enrollment.";
+                title.innerText = "Course Catalog";
+                subtitle.innerText = "Manage your teaching modules.";
                 document.getElementById('btn-courses').classList.add('bg-blue-600', 'text-white');
                 renderCourses(container);
             } else if (view === 'students') {
@@ -182,22 +169,21 @@
                 document.getElementById('btn-students').classList.add('bg-blue-600', 'text-white');
                 renderStudents(container);
             } else if (view === 'sessions') {
-                title.innerText = "Attendance Sessions";
-                subtitle.innerText = "Generate live check-in windows.";
+                title.innerText = "Attendance History";
+                subtitle.innerText = "Complete log of all verified check-ins.";
                 document.getElementById('btn-sessions').classList.add('bg-blue-600', 'text-white');
-                renderSessions(container);
+                renderHistory(container);
             } else if (view === 'zoom') {
                 title.innerText = "Zoom Integration";
-                subtitle.innerText = "Import attendance from Zoom meeting reports.";
+                subtitle.innerText = "Import meeting reports for online classes.";
                 document.getElementById('btn-zoom').classList.add('bg-blue-600', 'text-white');
                 renderZoom(container);
             } else if (view === 'scanner') {
-                title.innerText = "Check-in Terminal";
-                document.getElementById('btn-scanner').classList.add('bg-slate-800', 'text-white');
+                title.innerText = "Terminal Mode";
+                document.getElementById('btn-scanner').classList.add('bg-blue-600', 'text-white');
                 renderScanner(container);
             } else if (view === 'active-session') {
                 title.innerText = "Live Session QR";
-                subtitle.innerText = "Students should scan the code below.";
                 renderActiveQR(container);
             }
             
@@ -206,192 +192,92 @@
 
         // --- RENDERERS ---
         function renderDashboard(el) {
-            const totalAttendance = logs.length;
+            const avgAttendance = students.length ? (students.reduce((acc, s) => acc + s.rate, 0) / students.length).toFixed(1) : 0;
+            
             el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 font-medium">
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-sm mb-1 font-medium">Scans Today</p>
-                        <h3 class="text-3xl font-bold text-blue-600">${totalAttendance}</h3>
+                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Avg Attendance</p>
+                        <h3 class="text-3xl font-bold text-blue-600">${avgAttendance}%</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-sm mb-1 font-medium">Active Courses</p>
-                        <h3 class="text-3xl font-bold">${courses.length}</h3>
+                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Registry Size</p>
+                        <h3 class="text-3xl font-bold">${students.length}</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-sm mb-1 font-medium">System Health</p>
-                        <h3 class="text-3xl font-bold text-green-500">Online</h3>
+                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Amber Alert (60%)</p>
+                        <h3 class="text-3xl font-bold text-amber-500">${students.filter(s => s.rate < 60).length}</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Red Alert (75%)</p>
+                        <h3 class="text-3xl font-bold text-red-500">${students.filter(s => s.rate < 75).length}</h3>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl border p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h4 class="font-bold">Recent Activity</h4>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Live Log</span>
-                    </div>
-                    ${logs.length === 0 ? '<p class="text-slate-400 text-sm italic">No records yet.</p>' : `
-                        <div class="space-y-3">
-                            ${logs.slice(0, 5).map(log => `
-                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 ${log.method === 'zoom' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center text-xs font-bold">
-                                            <i data-lucide="${log.method === 'zoom' ? 'video' : 'qr-code'}" class="w-4 h-4"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold">${log.studentName}</p>
-                                            <p class="text-[10px] text-slate-400">${log.courseCode} • ${log.time} • ${log.method.toUpperCase()}</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">VERIFIED</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-        }
 
-        function renderZoom(el) {
-            el.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                            <i data-lucide="file-text" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-2">Process Meeting Report</h3>
-                        <p class="text-slate-500 text-sm mb-8 leading-relaxed">Upload a Zoom Participant Report (CSV) to sync online attendance. We match participants based on name and email.</p>
-                        
-                        <div class="space-y-4 mb-8">
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">1. Target Course</label>
-                                <select id="zoom-target-course" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none">
-                                    ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">2. Upload Report</label>
-                                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer group" onclick="document.getElementById('zoom-csv').click()">
-                                    <input type="file" id="zoom-csv" class="hidden" accept=".csv" onchange="handleZoomReport(event)">
-                                    <i data-lucide="upload-cloud" class="w-10 h-10 text-slate-300 group-hover:text-indigo-500 mx-auto mb-3 transition-colors"></i>
-                                    <p class="text-sm font-bold text-slate-600" id="zoom-file-status">Click to select CSV file</p>
-                                    <p class="text-xs text-slate-400 mt-1">Files should contain Name and Email columns</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button id="btn-process-zoom" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:bg-slate-300 disabled:shadow-none" disabled>
-                            Sync Attendance Records
+                <div class="bg-white rounded-2xl border shadow-sm overflow-hidden mb-8">
+                    <div class="p-6 border-b flex justify-between items-center">
+                        <h4 class="font-bold text-slate-800">Attendance & Compliance Report</h4>
+                        <button onclick="downloadCSVTemplate()" class="text-xs text-blue-600 font-bold flex items-center gap-1 hover:underline">
+                             <i data-lucide="download" class="w-3 h-3"></i> Download Excel Template
                         </button>
                     </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
+                            <tr>
+                                <th class="px-6 py-4">Student</th>
+                                <th class="px-6 py-4">Matric No.</th>
+                                <th class="px-6 py-4">Attendance</th>
+                                <th class="px-6 py-4">Missed</th>
+                                <th class="px-6 py-4 text-center">Status Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-sm">
+                            ${students.map(s => {
+                                const missed = Math.round(totalSessionsPerCourse * (1 - (s.rate / 100)));
+                                let remarkClass = "bg-green-100 text-green-700";
+                                let remarkText = "Good Standing";
+                                
+                                if (s.rate < 60) {
+                                    remarkClass = "bg-amber-100 text-amber-700 border border-amber-200";
+                                    remarkText = "Need for make-up attendance";
+                                } else if (s.rate < 75) {
+                                    remarkClass = "bg-red-100 text-red-700 border border-red-200";
+                                    remarkText = "Downgrade";
+                                }
 
-                    <div class="space-y-6">
-                        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
-                            <h4 class="font-bold mb-4 flex items-center gap-2">
-                                <i data-lucide="help-circle" class="w-4 h-4 text-indigo-400"></i>
-                                How it works
-                            </h4>
-                            <ul class="space-y-4 text-sm text-slate-400">
-                                <li class="flex gap-3">
-                                    <span class="text-indigo-400 font-bold">01</span>
-                                    <span>Download the "Usage Report" from your Zoom Admin dashboard.</span>
-                                </li>
-                                <li class="flex gap-3">
-                                    <span class="text-indigo-400 font-bold">02</span>
-                                    <span>Upload the CSV here and select the appropriate course code.</span>
-                                </li>
-                                <li class="flex gap-3">
-                                    <span class="text-indigo-400 font-bold">03</span>
-                                    <span>AttendX matches zoom display names with your enrolled students.</span>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div class="bg-white p-6 rounded-3xl border shadow-sm">
-                            <h4 class="font-bold mb-4">Integration History</h4>
-                            <div id="zoom-history" class="space-y-3">
-                                <p class="text-xs text-slate-400 italic">No reports imported yet.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderActiveQR(el) {
-            if (!activeSession) return switchView('sessions');
-            el.innerHTML = `
-                <div class="max-w-xl mx-auto flex flex-col items-center">
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl border text-center w-full mb-8">
-                        <div class="mb-6">
-                            <h3 class="text-2xl font-bold text-slate-800">${activeSession.courseCode}</h3>
-                            <p class="text-slate-400 font-medium">In-Person Session Active</p>
-                        </div>
-                        <div id="qrcode" class="mb-8 p-4 bg-slate-50 rounded-3xl inline-block"></div>
-                        <div class="grid grid-cols-2 gap-4 text-left">
-                            <div class="p-4 bg-blue-50 rounded-2xl">
-                                <p class="text-[10px] font-bold text-blue-400 uppercase">Timer</p>
-                                <p class="text-xl font-bold text-blue-600" id="timer">--:--</p>
-                            </div>
-                            <div class="p-4 bg-slate-50 rounded-2xl">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase">Check-ins</p>
-                                <p class="text-xl font-bold text-slate-800" id="session-count">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="endSession()" class="text-slate-400 hover:text-red-500 font-bold text-sm transition-colors">Terminate Session</button>
-                </div>
-            `;
-            setTimeout(() => {
-                const qrContainer = document.getElementById("qrcode");
-                qrContainer.innerHTML = "";
-                new QRCode(qrContainer, {
-                    text: activeSession.token,
-                    width: 256, height: 256,
-                    colorDark : "#0f172a", colorLight : "#f8fafc",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-                startTimer(activeSession.duration * 60);
-            }, 100);
-        }
-
-        function renderSessions(el) {
-            el.innerHTML = `
-                <div class="max-w-md mx-auto bg-white p-8 rounded-3xl border shadow-xl text-center">
-                    <div class="bg-blue-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600">
-                        <i data-lucide="zap" class="w-8 h-8"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-6 text-slate-800">New Physical Session</h3>
-                    <div class="space-y-4 text-left mb-8">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Target Course</label>
-                            <select id="session-course" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none">
-                                ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Duration (Min)</label>
-                            <input type="number" id="session-duration" value="15" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none">
-                        </div>
-                    </div>
-                    <button onclick="startSession()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all">Start Session</button>
-                </div>
-            `;
-        }
-
-        function renderCourses(el) {
-            el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${courses.map(c => `
-                        <div class="bg-white p-6 rounded-3xl border shadow-sm group">
-                            <div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors mb-4">
-                                <i data-lucide="book" class="w-5 h-5"></i>
-                            </div>
-                            <h4 class="font-bold text-slate-800 mb-1">${c.name}</h4>
-                            <p class="text-[10px] text-slate-400 mb-4 font-mono font-bold">${c.code}</p>
-                            <div class="flex justify-between items-center pt-4 border-t">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase">${c.students} Students</span>
-                                <button onclick="quickStart('${c.code}')" class="text-xs font-bold text-blue-600">Start Session</button>
-                            </div>
-                        </div>
-                    `).join('')}
+                                return `
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <img src="${s.picture}" class="w-8 h-8 rounded-full bg-slate-200 border border-slate-200" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
+                                                <div>
+                                                    <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
+                                                    <div class="text-[10px] text-slate-400 font-medium">${s.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-slate-600 font-mono text-xs">${s.matric}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div class="h-full ${s.rate < 60 ? 'bg-amber-500' : s.rate < 75 ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${s.rate}%"></div>
+                                                </div>
+                                                <span class="font-bold text-xs">${s.rate}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 font-bold text-slate-500 text-xs">${missed} / ${totalSessionsPerCourse}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex justify-center">
+                                                <span class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase ${remarkClass}">
+                                                    ${remarkText}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
         }
@@ -399,28 +285,31 @@
         function renderStudents(el) {
             el.innerHTML = `
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
                             <tr>
                                 <th class="px-6 py-4">Student</th>
-                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Phone / Email</th>
+                                <th class="px-6 py-4">Matric No.</th>
                                 <th class="px-6 py-4">Course</th>
-                                <th class="px-6 py-4">Attendance Rate</th>
+                                <th class="px-6 py-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y text-sm">
-                            ${students.map(s => `
+                            ${students.map((s, index) => `
                                 <tr>
-                                    <td class="px-6 py-4 font-bold text-slate-800">${s.name}<br><span class="text-[10px] font-normal text-slate-400">${s.email}</span></td>
-                                    <td class="px-6 py-4 font-mono text-slate-500">${s.id}</td>
-                                    <td class="px-6 py-4 font-bold text-slate-400">${s.course}</td>
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <img src="${s.picture}" class="w-10 h-10 rounded-xl bg-slate-100" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
+                                        <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
+                                    </td>
                                     <td class="px-6 py-4">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div class="h-full ${s.rate > 75 ? 'bg-green-500' : 'bg-red-500'}" style="width: ${s.rate}%"></div>
-                                            </div>
-                                            <span class="font-bold text-xs">${s.rate}%</span>
-                                        </div>
+                                        <span class="font-medium text-slate-600 text-xs">${s.phone}</span><br>
+                                        <span class="text-[10px] text-slate-400 font-medium">${s.email}</span>
+                                    </td>
+                                    <td class="px-6 py-4 font-mono text-xs text-slate-500">${s.matric}</td>
+                                    <td class="px-6 py-4 font-bold text-slate-500 text-xs uppercase tracking-tighter">${s.course}</td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="editStudent(${index})" class="p-2 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-lg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -430,79 +319,281 @@
             `;
         }
 
-        function renderScanner(el) {
+        // --- CSV HANDLING ---
+        function downloadCSVTemplate() {
+            const headers = "Picture_URL,FirstName,LastName,MatricNumber,Email,PhoneNumber,CourseCode\n";
+            const example = "https://i.pravatar.cc/150,John,Doe,2024-ABC-001,john@edu.com,+234123456,CS101\n";
+            const blob = new Blob([headers + example], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'AttendX_Student_Template.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Template downloaded!");
+        }
+
+        function handleStudentCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').slice(1); // Skip headers
+                let count = 0;
+
+                rows.forEach(row => {
+                    const cols = row.split(',');
+                    if (cols.length >= 6 && cols[1].trim()) {
+                        students.push({
+                            picture: cols[0].trim() || `https://ui-avatars.com/api/?name=${cols[1]}+${cols[2]}`,
+                            firstName: cols[1].trim(),
+                            lastName: cols[2].trim(),
+                            matric: cols[3].trim(),
+                            email: cols[4].trim(),
+                            phone: cols[5].trim(),
+                            course: cols[6]?.trim() || 'CS101',
+                            rate: 100 // Default 100% for new imports
+                        });
+                        count++;
+                    }
+                });
+
+                showToast(`Successfully imported ${count} students!`);
+                switchView('dashboard');
+            };
+            reader.readAsText(file);
+        }
+
+        // --- REMAINDER OF APP LOGIC ---
+        function renderCourses(el) {
             el.innerHTML = `
-                <div class="max-w-sm mx-auto bg-slate-900 rounded-[3rem] p-4 border-[8px] border-slate-800 shadow-2xl relative overflow-hidden h-[600px]">
-                    <div class="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-6 bg-slate-800 rounded-full z-10"></div>
-                    <div class="bg-black w-full h-full rounded-[2.2rem] flex flex-col items-center justify-center p-8 text-white relative">
-                        <div class="w-64 h-64 border-2 border-blue-500/30 rounded-3xl relative mb-12 flex items-center justify-center mx-auto overflow-hidden bg-slate-800/20">
-                            <i data-lucide="camera" class="w-12 h-12 text-white/10"></i>
-                            <div class="scan-line absolute inset-x-4 h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6]"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${courses.map((c, index) => `
+                        <div class="bg-white p-6 rounded-3xl border shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="book" class="w-5 h-5"></i>
+                                    </div>
+                                    <button onclick="editCourse(${index})" class="text-slate-300 hover:text-blue-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                </div>
+                                <h4 class="font-bold text-slate-800">${c.name}</h4>
+                                <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase">${c.code}</p>
+                                <p class="text-xs text-slate-500 mb-4">${c.instructor}</p>
+                            </div>
+                            <button onclick="quickStart('${c.code}')" class="w-full bg-slate-50 hover:bg-blue-600 hover:text-white py-2 rounded-lg text-xs font-bold transition-all">Start Session</button>
                         </div>
-                        <h4 class="text-xl font-bold mb-2">Check-in Ready</h4>
-                        <p class="text-slate-500 text-sm mb-12 text-center">Scan the classroom QR to mark yourself present.</p>
-                        <button onclick="simulateScan()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20">Simulate Scan</button>
-                    </div>
+                    `).join('')}
                 </div>
             `;
         }
 
-        // --- ZOOM LOGIC ---
-        function handleZoomReport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            document.getElementById('zoom-file-status').innerText = `Selected: ${file.name}`;
-            const btn = document.getElementById('btn-process-zoom');
-            btn.disabled = false;
-            btn.onclick = () => processZoomReport(file);
+        function renderHistory(el) {
+            el.innerHTML = `
+                <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
+                            <tr>
+                                <th class="px-6 py-4">Date & Time</th>
+                                <th class="px-6 py-4">Student</th>
+                                <th class="px-6 py-4">Course</th>
+                                <th class="px-6 py-4">Method</th>
+                                <th class="px-6 py-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-sm">
+                            ${logs.length ? logs.slice().reverse().map((log, index) => `
+                                <tr>
+                                    <td class="px-6 py-4">
+                                        <span class="font-bold text-slate-800">${log.date}</span><br>
+                                        <span class="text-[10px] text-slate-400 font-bold uppercase">${log.time}</span>
+                                    </td>
+                                    <td class="px-6 py-4 font-bold text-slate-600">${log.studentName}</td>
+                                    <td class="px-6 py-4 text-slate-500">${log.courseCode}</td>
+                                    <td class="px-6 py-4 uppercase text-[10px] font-bold text-slate-400">${log.method}</td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="editLog(${logs.length - 1 - index})" class="p-2 text-slate-400 hover:text-blue-600"><i data-lucide="calendar" class="w-4 h-4"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('') : `<tr><td colspan="5" class="px-6 py-20 text-center text-slate-300 font-medium">No records found.</td></tr>`}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
-        function processZoomReport(file) {
-            const courseCode = document.getElementById('zoom-target-course').value;
-            const btn = document.getElementById('btn-process-zoom');
-            btn.innerText = "Syncing...";
-            btn.disabled = true;
+        function renderZoom(el) {
+            el.innerHTML = `
+                <div class="max-w-2xl mx-auto bg-white p-8 rounded-3xl border shadow-sm">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
+                        <i data-lucide="upload" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Import Zoom Attendance</h3>
+                    <p class="text-slate-500 text-sm mb-6">Select a course and upload your CSV report to sync meeting attendance records automatically.</p>
+                    
+                    <div class="space-y-4 mb-8">
+                         <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Course Target</label>
+                            <select id="zoom-course" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none">
+                                ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="border-2 border-dashed rounded-2xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('zoom-file').click()">
+                            <input type="file" id="zoom-file" class="hidden" onchange="handleZoomImport(event)">
+                            <i data-lucide="file-text" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm font-bold text-slate-600" id="file-name">Click to browse CSV</p>
+                        </div>
+                    </div>
+                    <button onclick="processZoom()" id="zoom-btn" disabled class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold disabled:opacity-50">Sync Records</button>
+                </div>
+            `;
+        }
 
+        function renderScanner(el) {
+            el.innerHTML = `
+                <div class="max-w-sm mx-auto bg-slate-900 rounded-[3rem] p-4 border-[8px] border-slate-800 h-[600px] flex flex-col justify-center items-center text-center text-white relative overflow-hidden shadow-2xl">
+                    <div class="w-64 h-64 border-2 border-blue-500/30 rounded-3xl relative mb-12 bg-slate-800/20 flex items-center justify-center">
+                        <i data-lucide="camera" class="w-12 h-12 text-white/5"></i>
+                        <div class="scan-line absolute inset-x-4 h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6]"></div>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2 tracking-tight">Scanner Terminal</h4>
+                    <p class="text-slate-500 text-sm mb-12 px-8">Point camera at AttendX session QR to check-in.</p>
+                    <button onclick="simulateScan()" class="w-4/5 bg-blue-600 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-transform">Simulate Scan</button>
+                </div>
+            `;
+        }
+
+        function renderActiveQR(el) {
+             el.innerHTML = `
+                <div class="max-w-xl mx-auto flex flex-col items-center">
+                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl border text-center w-full mb-8">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">${activeSession.courseCode}</h3>
+                        <p class="text-slate-400 font-bold text-[10px] uppercase mb-8">Live Classroom Session</p>
+                        <div id="qrcode" class="mb-6 inline-block p-4 bg-slate-50 rounded-3xl relative group"></div>
+                        <div class="mb-8">
+                            <button onclick="copyShareLink()" class="flex items-center gap-2 mx-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-md">
+                                <i data-lucide="share-2" class="w-4 h-4"></i>
+                                Copy Share Link
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-blue-50 rounded-2xl text-left">
+                                <p class="text-[10px] font-bold text-blue-400 uppercase">Attendees</p>
+                                <p class="text-2xl font-bold text-blue-600" id="live-count">0</p>
+                            </div>
+                            <div class="p-4 bg-slate-50 rounded-2xl text-left">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Started At</p>
+                                <p class="text-lg font-bold text-slate-800">${activeSession.time}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="endSession()" class="text-slate-400 hover:text-red-500 font-bold text-sm transition-colors">End Session</button>
+                </div>
+            `;
             setTimeout(() => {
-                // Simulate matching report data to our students
-                const matched = students.filter(s => s.course === courseCode || Math.random() > 0.5).slice(0, 3);
-                
-                matched.forEach(student => {
-                    logs.unshift({
-                        studentName: student.name,
-                        courseCode: courseCode,
-                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        method: 'zoom'
-                    });
-                    // Slightly increase attendance rate
-                    student.rate = Math.min(100, student.rate + 1);
-                });
-
-                showToast(`Success: Synced ${matched.length} students from Zoom report.`);
-                switchView('dashboard');
-            }, 1500);
+                const qrContainer = document.getElementById("qrcode");
+                new QRCode(qrContainer, { text: `https://attendx.edu/checkin?session=${activeSession.token}`, width: 256, height: 256, colorDark: "#0f172a", colorLight: "#f8fafc", correctLevel: QRCode.CorrectLevel.H });
+                lucide.createIcons();
+            }, 100);
         }
 
-        // --- SESSION LOGIC ---
-        function startSession() {
-            const code = document.getElementById('session-course').value;
-            const duration = document.getElementById('session-duration').value;
-            activeSession = {
-                courseCode: code,
-                duration: parseInt(duration),
-                token: `SECURE_${Date.now()}_${code}`,
-                attendees: 0
-            };
-            switchView('active-session');
-            showToast(`Session live for ${code}`);
+        function copyShareLink() {
+            if (!activeSession) return;
+            const shareText = `📝 Attendance for ${activeSession.courseCode}\n🔗 Link: https://attendx.edu/checkin?session=${activeSession.token}`;
+            const textArea = document.createElement("textarea");
+            textArea.value = shareText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast("Copied to clipboard!");
+        }
+
+        function showModal(content) {
+            const backdrop = document.getElementById('modal-backdrop');
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold" id="modal-title">Edit Entry</h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+                </div>
+                ${content}
+            `;
+            backdrop.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('modal-body').classList.remove('scale-95', 'opacity-0');
+                lucide.createIcons();
+            }, 10);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-body').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => document.getElementById('modal-backdrop').classList.add('hidden'), 200);
+        }
+
+        function editStudent(index) {
+            const s = students[index];
+            showModal(`
+                <div class="space-y-3">
+                    <input type="text" id="edit-f-name" value="${s.firstName}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="First Name">
+                    <input type="text" id="edit-l-name" value="${s.lastName}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Last Name">
+                    <input type="text" id="edit-matric" value="${s.matric}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Matric No.">
+                    <input type="email" id="edit-email" value="${s.email}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Email">
+                    <input type="text" id="edit-phone" value="${s.phone}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Phone">
+                    <input type="text" id="edit-pic" value="${s.picture}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Picture URL">
+                    <button onclick="saveStudent(${index})" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold mt-4">Update Student</button>
+                </div>
+            `);
+            document.getElementById('modal-title').innerText = "Update Student Info";
+        }
+
+        function saveStudent(index) {
+            students[index].firstName = document.getElementById('edit-f-name').value;
+            students[index].lastName = document.getElementById('edit-l-name').value;
+            students[index].matric = document.getElementById('edit-matric').value;
+            students[index].email = document.getElementById('edit-email').value;
+            students[index].phone = document.getElementById('edit-phone').value;
+            students[index].picture = document.getElementById('edit-pic').value;
+            closeModal();
+            switchView('students');
+            showToast("Profile updated.");
+        }
+
+        function openCreateCourseModal() {
+            showModal(`
+                <div class="space-y-4">
+                    <input type="text" id="new-c-code" placeholder="CS101" class="w-full border p-3 rounded-xl bg-slate-50 font-bold uppercase">
+                    <input type="text" id="new-c-name" placeholder="Course Title" class="w-full border p-3 rounded-xl bg-slate-50 font-medium">
+                    <input type="text" id="new-c-instr" placeholder="Instructor Name" class="w-full border p-3 rounded-xl bg-slate-50 font-medium">
+                    <button onclick="createNewCourse()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">Create Course</button>
+                </div>
+            `);
+            document.getElementById('modal-title').innerText = "Add New Course";
+        }
+
+        function createNewCourse() {
+            const code = document.getElementById('new-c-code').value;
+            const name = document.getElementById('new-c-name').value;
+            const instr = document.getElementById('new-c-instr').value;
+            if(code && name) {
+                courses.push({ code, name, instructor: instr });
+                closeModal();
+                switchView('courses');
+                showToast("Course created.");
+            }
         }
 
         function quickStart(code) {
+            const now = new Date();
             activeSession = {
                 courseCode: code,
-                duration: 15,
-                token: `SECURE_${Date.now()}_${code}`,
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                token: `SESS_${Date.now()}`,
                 attendees: 0
             };
             switchView('active-session');
@@ -510,40 +601,43 @@
 
         function endSession() {
             activeSession = null;
-            switchView('sessions');
+            switchView('dashboard');
         }
 
         function simulateScan() {
-            if (!activeSession) return showToast("No active session found.");
+            if(!activeSession) return showToast("No active session.");
             const student = students[Math.floor(Math.random() * students.length)];
-            logs.unshift({
-                studentName: student.name,
+            const now = new Date();
+            logs.push({
+                studentName: `${student.firstName} ${student.lastName}`,
                 courseCode: activeSession.courseCode,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 method: 'qr'
             });
             activeSession.attendees++;
-            const countEl = document.getElementById('session-count');
-            if (countEl) countEl.innerText = activeSession.attendees;
-            showToast(`${student.name} scanned successfully!`);
+            const count = document.getElementById('live-count');
+            if(count) count.innerText = activeSession.attendees;
+            showToast(`${student.firstName} checked in.`);
         }
 
-        function startTimer(seconds) {
-            const timerEl = document.getElementById('timer');
-            const interval = setInterval(() => {
-                if (!activeSession || seconds <= 0) {
-                    clearInterval(interval);
-                    if (seconds <= 0) endSession();
-                    return;
-                }
-                seconds--;
-                const m = Math.floor(seconds / 60);
-                const s = seconds % 60;
-                timerEl.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        function handleZoomImport(event) {
+            if(event.target.files.length) {
+                document.getElementById('file-name').innerText = event.target.files[0].name;
+                document.getElementById('zoom-btn').disabled = false;
+            }
+        }
+
+        function processZoom() {
+            const code = document.getElementById('zoom-course').value;
+            const btn = document.getElementById('zoom-btn');
+            btn.innerText = "Syncing...";
+            setTimeout(() => {
+                showToast(`Imported Zoom participants for ${code}.`);
+                switchView('sessions');
             }, 1000);
         }
 
-        // --- HELPERS ---
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-text').innerText = msg;
@@ -553,39 +647,6 @@
                 toast.classList.remove('translate-y-0');
                 toast.classList.add('translate-y-24');
             }, 3000);
-        }
-
-        function openCreateCourseModal() {
-            document.getElementById('course-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('modal-content').classList.remove('scale-95', 'opacity-0'), 10);
-        }
-
-        function closeCreateCourseModal() {
-            document.getElementById('modal-content').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => document.getElementById('course-modal').classList.add('hidden'), 200);
-        }
-
-        function saveCourse() {
-            const code = document.getElementById('new-course-code').value;
-            const name = document.getElementById('new-course-name').value;
-            const instructor = document.getElementById('new-course-instructor').value;
-            if (code && name) {
-                courses.push({ code, name, instructor, students: 0 });
-                closeCreateCourseModal();
-                switchView('courses');
-                showToast(`Course ${code} created.`);
-            }
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                showToast(`Importing students from ${file.name}...`);
-                setTimeout(() => {
-                    students.push({ id: '2024-X', name: 'Imported Student', email: 'imported@uni.edu', rate: 100, lastSeen: 'Just now', course: 'CS101' });
-                    switchView('students');
-                }, 1000);
-            }
         }
 
         window.onload = () => switchView('dashboard');
