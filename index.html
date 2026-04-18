@@ -135,6 +135,7 @@
             { id: 'c3', code: 'ECN705', name: 'Managerial Economics', totalSessions: 22 }
         ];
 
+        // Seed initial students
         let students = [
             { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah@uni.edu', cohort: 'MMBA 10', courseId: 'c1', sessions: [1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
             { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'john@uni.edu', cohort: 'EMBA 30', courseId: 'c1', sessions: [1,0,1,0,1,0,0,0,1,0,1,0,1,1,1,0,1,0,1,0,0,1] },
@@ -149,11 +150,11 @@
 
         // --- EXPOSED FUNCTIONS ---
         window.downloadCSVTemplate = function() {
-            const csvContent = "data:text/csv;charset=utf-8,Matric,FirstName,LastName,Email,Cohort\n24/MMBA/000,Sample,User,sample@example.com,MMBA 10";
+            const csvContent = "data:text/csv;charset=utf-8,Matric,FirstName,LastName,Email,Cohort\n24/MMBA/001,Sarah,Ade,sarah@uni.edu,MMBA 10\n24/EMBA/012,John,Doe,john@uni.edu,EMBA 30\n24/MEM/045,Grace,Eze,grace@uni.edu,MEMBA 13";
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "attendx_template.csv");
+            link.setAttribute("download", "attendx_student_template.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -162,10 +163,80 @@
 
         window.handleFileUpload = function(event) {
             const file = event.target.files[0];
-            if (file) {
-                showToast(`File "${file.name}" uploaded for processing`);
-            }
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                
+                let importCount = 0;
+                let errorCount = 0;
+
+                // Simple CSV Parsing logic
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    const cols = lines[i].split(',').map(c => c.trim());
+                    
+                    if (cols.length >= 5) {
+                        const matric = cols[0];
+                        const fname = cols[1];
+                        const lname = cols[2];
+                        const email = cols[3];
+                        const cohort = cols[4];
+
+                        // Find if student exists by Matric
+                        const existingIdx = students.findIndex(s => s.matric === matric);
+                        
+                        if (existingIdx !== -1) {
+                            // Update existing student cohort and details
+                            students[existingIdx].fname = fname;
+                            students[existingIdx].lname = lname;
+                            students[existingIdx].email = email;
+                            students[existingIdx].cohort = cohort;
+                        } else {
+                            // Create new student
+                            students.push({
+                                id: 's' + (students.length + 1),
+                                matric: matric,
+                                fname: fname,
+                                lname: lname,
+                                email: email,
+                                cohort: cohort,
+                                courseId: 'c1', // Default course assignment
+                                sessions: new Array(22).fill(0) // Initialize with zero attendance
+                            });
+                        }
+                        importCount++;
+                    } else {
+                        errorCount++;
+                    }
+                }
+
+                showToast(`Successfully processed ${importCount} records. ${errorCount ? errorCount + ' errors.' : ''}`);
+                // Refresh view to show updated cohorts/students
+                switchView(activeView);
+                // Also refresh cohort filter dropdown if needed
+                updateCohortDropdown();
+            };
+            reader.readAsText(file);
         };
+
+        function updateCohortDropdown() {
+            const select = document.getElementById('global-cohort-filter');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="ALL">All Cohorts</option>';
+            
+            // Get unique cohorts from student state
+            const cohortsFound = Array.from(new Set(students.map(s => s.cohort))).sort();
+            cohortsFound.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                select.appendChild(opt);
+            });
+            select.value = cohortsFound.includes(currentValue) ? currentValue : "ALL";
+        }
 
         window.openCourseEdit = function(courseId) {
             const course = courses.find(c => c.id === courseId);
@@ -270,7 +341,7 @@
         // --- INTERNAL LOGIC ---
         function getActiveCohorts() {
             const active = new Set(students.map(s => s.cohort));
-            return Array.from(active);
+            return Array.from(active).sort();
         }
 
         function getAttendanceStats(student) {
@@ -380,10 +451,10 @@
             new Chart(document.getElementById('chart-compliance-detail'), {
                 type: 'line',
                 data: {
-                    labels: list.map(s => s.fname),
+                    labels: list.length > 0 ? list.map(s => s.fname) : ['No Data'],
                     datasets: [{
                         label: 'Attendance %',
-                        data: list.map(s => parseFloat(getAttendanceStats(s).percent)),
+                        data: list.length > 0 ? list.map(s => parseFloat(getAttendanceStats(s).percent)) : [0],
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         fill: true,
@@ -460,12 +531,12 @@
                             <div class="w-56">Student Name</div>
                             <div class="flex-1 flex gap-1">${Array.from({length:22}, (_,i)=>`<div class="w-8 text-center font-bold">${i+1}</div>`).join('')}</div>
                         </div>
-                        ${list.map(s => `
+                        ${list.length > 0 ? list.map(s => `
                             <div class="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all rounded-xl">
                                 <div class="w-56"><div class="font-black text-xs truncate">${s.fname} ${s.lname}</div></div>
                                 <div class="flex-1 flex gap-1">${s.sessions.map((v) => `<div class="w-8 h-8 rounded-lg flex items-center justify-center ${v === 1 ? 'bg-green-500 text-white' : 'bg-slate-100'}">${v === 1 ? '✓' : ''}</div>`).join('')}</div>
                             </div>
-                        `).join('')}
+                        `).join('') : '<div class="text-center py-10 text-slate-400 font-bold">No students in this cohort</div>'}
                     </div>
                 </div>
              `;
@@ -523,12 +594,7 @@
         }
 
         function init() {
-            const select = document.getElementById('global-cohort-filter');
-            ALL_COHORTS.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c; opt.innerText = c;
-                select.appendChild(opt);
-            });
+            updateCohortDropdown();
             switchView('overview');
         }
 
