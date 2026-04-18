@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Attendance Management System</title>
+    <title>AttendX | Academic Attendance Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -25,7 +25,7 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-slate-900 text-white p-6 fixed h-full flex flex-col border-r border-slate-800 z-30">
             <div class="flex items-center gap-3 mb-10 px-2">
-                <div class="bg-blue-600 p-2 rounded-lg"><i data-lucide="user-check" class="w-6 h-6"></i></div>
+                <div class="bg-blue-600 p-2 rounded-lg"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
                 <h1 class="font-bold text-xl tracking-tight">AttendX</h1>
             </div>
             
@@ -44,19 +44,14 @@
                 </button>
                 <button onclick="switchView('sessions')" id="btn-sessions" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="history" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">Past Sessions</span>
-                </button>
-                <div class="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Integrations</div>
-                <button onclick="switchView('zoom')" id="btn-zoom" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <i data-lucide="video" class="w-5 h-5"></i>
-                    <span class="font-medium text-sm">Zoom Reports</span>
+                    <span class="font-medium text-sm">Session History</span>
                 </button>
             </nav>
 
             <div class="mt-auto pt-4 border-t border-slate-800 space-y-2">
                 <button onclick="downloadCSVTemplate()" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-[11px] font-bold text-blue-400 border border-slate-700 transition-colors">
                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    CSV Template
+                    Master CSV Template
                 </button>
                 <button onclick="switchView('scanner')" id="btn-scanner" class="nav-link w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-sm font-medium transition-colors">
                     <i data-lucide="qr-code" class="w-4 h-4"></i>
@@ -70,18 +65,14 @@
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h2 id="page-title" class="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
-                    <p id="page-subtitle" class="text-slate-500 text-sm">Monitoring system metrics.</p>
+                    <p id="page-subtitle" class="text-slate-500 text-sm">Unified reports & compliance.</p>
                 </div>
                 <div id="header-actions" class="flex gap-3">
                     <button onclick="document.getElementById('csv-upload').click()" class="flex items-center gap-2 bg-slate-900 px-4 py-2 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all">
-                        <i data-lucide="upload" class="w-4 h-4"></i>
-                        Batch Import
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                        Import Registry
                     </button>
                     <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="handleStudentCSVImport(event)">
-                    <button onclick="openCreateCourseModal()" class="flex items-center gap-2 bg-blue-600 px-4 py-2 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-lg transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        Add Course
-                    </button>
                 </div>
             </div>
 
@@ -91,7 +82,7 @@
 
     <!-- Universal Modal -->
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 transform transition-all scale-95 opacity-0" id="modal-body"></div>
+        <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl p-8 transform transition-all scale-95 opacity-0" id="modal-body"></div>
     </div>
 
     <!-- Toast -->
@@ -105,36 +96,10 @@
         const totalSessionsPerCourse = 20;
 
         let students = [
-            { 
-                matric: '2024-001', 
-                firstName: 'Alice', 
-                lastName: 'Smith', 
-                email: 'alice@uni.edu', 
-                phone: '+123456789',
-                picture: 'https://i.pravatar.cc/150?u=alice',
-                rate: 92, 
-                course: 'CS101' 
-            },
-            { 
-                matric: '2024-002', 
-                firstName: 'Bob', 
-                lastName: 'Johnson', 
-                email: 'bob@uni.edu', 
-                phone: '+123456780',
-                picture: 'https://i.pravatar.cc/150?u=bob',
-                rate: 71, 
-                course: 'CS101' 
-            },
-            { 
-                matric: '2024-003', 
-                firstName: 'Charlie', 
-                lastName: 'Brown', 
-                email: 'charlie@uni.edu', 
-                phone: '+123456781',
-                picture: 'https://i.pravatar.cc/150?u=charlie',
-                rate: 58, 
-                course: 'PHY201' 
-            }
+            { matric: '2024-CSC-001', firstName: 'Alice', lastName: 'Smith', email: 'alice@uni.edu', phone: '+2341', picture: 'https://i.pravatar.cc/150?u=1', rate: 92, course: 'CS101' },
+            { matric: '2024-CSC-002', firstName: 'Bob', lastName: 'Johnson', email: 'bob@uni.edu', phone: '+2342', picture: 'https://i.pravatar.cc/150?u=2', rate: 71, course: 'CS101' },
+            { matric: '2024-PHY-003', firstName: 'Charlie', lastName: 'Brown', email: 'charlie@uni.edu', phone: '+2343', picture: 'https://i.pravatar.cc/150?u=3', rate: 58, course: 'PHY201' },
+            { matric: '2024-PHY-004', firstName: 'Diana', lastName: 'Prince', email: 'diana@uni.edu', phone: '+2344', picture: 'https://i.pravatar.cc/150?u=4', rate: 45, course: 'PHY201' }
         ];
 
         let courses = [
@@ -142,7 +107,24 @@
             { code: 'PHY201', name: 'Applied Physics', instructor: 'Dr. Marie Curie' }
         ];
 
-        let logs = [];
+        // Logs grouped by session
+        let sessions = [
+            {
+                id: 'sess_1',
+                courseCode: 'CS101',
+                date: '2024-05-10',
+                time: '09:00 AM',
+                attendees: ['2024-CSC-001', '2024-CSC-002']
+            },
+            {
+                id: 'sess_2',
+                courseCode: 'PHY201',
+                date: '2024-05-11',
+                time: '11:00 AM',
+                attendees: ['2024-PHY-003']
+            }
+        ];
+
         let activeSession = null;
 
         // --- NAVIGATION ---
@@ -155,88 +137,89 @@
             
             if (view === 'dashboard') {
                 title.innerText = "Admin Dashboard";
-                subtitle.innerText = "General Report and Compliance Monitoring.";
+                subtitle.innerText = "Consolidated Compliance Tracking.";
                 document.getElementById('btn-dashboard').classList.add('bg-blue-600', 'text-white');
                 renderDashboard(container);
             } else if (view === 'courses') {
-                title.innerText = "Course Catalog";
-                subtitle.innerText = "Manage your teaching modules.";
+                title.innerText = "Manage Courses";
+                subtitle.innerText = "Teaching modules and instructor assignments.";
                 document.getElementById('btn-courses').classList.add('bg-blue-600', 'text-white');
                 renderCourses(container);
             } else if (view === 'students') {
-                title.innerText = "Student Registry";
-                subtitle.innerText = "Manage student records and performance.";
+                title.innerText = "Master Registry";
+                subtitle.innerText = "All students across all academic paths.";
                 document.getElementById('btn-students').classList.add('bg-blue-600', 'text-white');
                 renderStudents(container);
             } else if (view === 'sessions') {
-                title.innerText = "Attendance History";
-                subtitle.innerText = "Complete log of all verified check-ins.";
+                title.innerText = "Session Explorer";
+                subtitle.innerText = "Select a course to view detailed session logs.";
                 document.getElementById('btn-sessions').classList.add('bg-blue-600', 'text-white');
-                renderHistory(container);
-            } else if (view === 'zoom') {
-                title.innerText = "Zoom Integration";
-                subtitle.innerText = "Import meeting reports for online classes.";
-                document.getElementById('btn-zoom').classList.add('bg-blue-600', 'text-white');
-                renderZoom(container);
+                renderSessionExplorer(container);
             } else if (view === 'scanner') {
-                title.innerText = "Terminal Mode";
+                title.innerText = "Verification Terminal";
                 document.getElementById('btn-scanner').classList.add('bg-blue-600', 'text-white');
                 renderScanner(container);
             } else if (view === 'active-session') {
-                title.innerText = "Live Session QR";
+                title.innerText = "Ongoing Class Session";
                 renderActiveQR(container);
             }
             
             lucide.createIcons();
         }
 
-        // --- RENDERERS ---
+        // --- DASHBOARD RENDERER ---
         function renderDashboard(el) {
             const avgAttendance = students.length ? (students.reduce((acc, s) => acc + s.rate, 0) / students.length).toFixed(1) : 0;
             
             el.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 font-medium">
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Avg Attendance</p>
+                        <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Global Avg Attendance</p>
                         <h3 class="text-3xl font-bold text-blue-600">${avgAttendance}%</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Registry Size</p>
+                        <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Total Students</p>
                         <h3 class="text-3xl font-bold">${students.length}</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Amber Alert (60%)</p>
+                        <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Make-up Required (<60%)</p>
                         <h3 class="text-3xl font-bold text-amber-500">${students.filter(s => s.rate < 60).length}</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                        <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Red Alert (75%)</p>
+                        <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1">Downgrade Warning (<75%)</p>
                         <h3 class="text-3xl font-bold text-red-500">${students.filter(s => s.rate < 75).length}</h3>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden mb-8">
                     <div class="p-6 border-b flex justify-between items-center">
-                        <h4 class="font-bold text-slate-800">Attendance & Compliance Report</h4>
-                        <button onclick="downloadCSVTemplate()" class="text-xs text-blue-600 font-bold flex items-center gap-1 hover:underline">
-                             <i data-lucide="download" class="w-3 h-3"></i> Download Excel Template
-                        </button>
+                        <h4 class="font-bold text-slate-800">Consolidated Attendance Report</h4>
+                        <div class="flex gap-2">
+                             <select id="dash-filter" onchange="renderDashboard(document.getElementById('view-container'))" class="bg-slate-50 border rounded-lg px-3 py-1.5 text-xs font-bold outline-none">
+                                <option value="ALL">All Courses</option>
+                                ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
+                             </select>
+                        </div>
                     </div>
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
                             <tr>
-                                <th class="px-6 py-4">Student</th>
-                                <th class="px-6 py-4">Matric No.</th>
-                                <th class="px-6 py-4">Attendance</th>
+                                <th class="px-6 py-4">Student Identity</th>
+                                <th class="px-6 py-4">Matric Number</th>
+                                <th class="px-6 py-4">Course</th>
+                                <th class="px-6 py-4">Avg. Rate</th>
                                 <th class="px-6 py-4">Missed</th>
-                                <th class="px-6 py-4 text-center">Status Remark</th>
+                                <th class="px-6 py-4 text-center">Compliance Remark</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y text-sm">
-                            ${students.map(s => {
+                            ${students.filter(s => {
+                                const filter = document.getElementById('dash-filter')?.value || 'ALL';
+                                return filter === 'ALL' || s.course === filter;
+                            }).map(s => {
                                 const missed = Math.round(totalSessionsPerCourse * (1 - (s.rate / 100)));
                                 let remarkClass = "bg-green-100 text-green-700";
                                 let remarkText = "Good Standing";
-                                
                                 if (s.rate < 60) {
                                     remarkClass = "bg-amber-100 text-amber-700 border border-amber-200";
                                     remarkText = "Need for make-up attendance";
@@ -247,31 +230,21 @@
 
                                 return `
                                     <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <img src="${s.picture}" class="w-8 h-8 rounded-full bg-slate-200 border border-slate-200" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
-                                                <div>
-                                                    <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
-                                                    <div class="text-[10px] text-slate-400 font-medium">${s.email}</div>
-                                                </div>
+                                        <td class="px-6 py-4 flex items-center gap-3">
+                                            <img src="${s.picture}" class="w-8 h-8 rounded-full border" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
+                                            <div>
+                                                <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
+                                                <div class="text-[9px] text-slate-400 font-medium">${s.email}</div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 text-slate-600 font-mono text-xs">${s.matric}</td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div class="h-full ${s.rate < 60 ? 'bg-amber-500' : s.rate < 75 ? 'bg-red-500' : 'bg-blue-600'}" style="width: ${s.rate}%"></div>
-                                                </div>
-                                                <span class="font-bold text-xs">${s.rate}%</span>
-                                            </div>
+                                        <td class="px-6 py-4 font-mono text-xs text-slate-600">${s.matric}</td>
+                                        <td class="px-6 py-4 text-xs font-bold text-slate-500">${s.course}</td>
+                                        <td class="px-6 py-4 font-bold text-xs">
+                                            <span class="${s.rate < 60 ? 'text-amber-600' : s.rate < 75 ? 'text-red-600' : 'text-blue-600'}">${s.rate}%</span>
                                         </td>
-                                        <td class="px-6 py-4 font-bold text-slate-500 text-xs">${missed} / ${totalSessionsPerCourse}</td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex justify-center">
-                                                <span class="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase ${remarkClass}">
-                                                    ${remarkText}
-                                                </span>
-                                            </div>
+                                        <td class="px-6 py-4 font-medium text-slate-400 text-xs">${missed} / ${totalSessionsPerCourse}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="px-3 py-1 rounded-full text-[9px] font-bold uppercase ${remarkClass}">${remarkText}</span>
                                         </td>
                                     </tr>
                                 `;
@@ -280,59 +253,123 @@
                     </table>
                 </div>
             `;
+            lucide.createIcons();
         }
 
-        function renderStudents(el) {
+        // --- SESSION EXPLORER RENDERER ---
+        function renderSessionExplorer(el) {
             el.innerHTML = `
-                <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
-                            <tr>
-                                <th class="px-6 py-4">Student</th>
-                                <th class="px-6 py-4">Phone / Email</th>
-                                <th class="px-6 py-4">Matric No.</th>
-                                <th class="px-6 py-4">Course</th>
-                                <th class="px-6 py-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y text-sm">
-                            ${students.map((s, index) => `
-                                <tr>
-                                    <td class="px-6 py-4 flex items-center gap-3">
-                                        <img src="${s.picture}" class="w-10 h-10 rounded-xl bg-slate-100" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
-                                        <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="font-medium text-slate-600 text-xs">${s.phone}</span><br>
-                                        <span class="text-[10px] text-slate-400 font-medium">${s.email}</span>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-xs text-slate-500">${s.matric}</td>
-                                    <td class="px-6 py-4 font-bold text-slate-500 text-xs uppercase tracking-tighter">${s.course}</td>
-                                    <td class="px-6 py-4">
-                                        <button onclick="editStudent(${index})" class="p-2 bg-slate-50 text-slate-400 hover:text-blue-600 rounded-lg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Course List -->
+                    <div class="lg:col-span-4 space-y-4">
+                        <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Select Course</h5>
+                        ${courses.map(c => `
+                            <button onclick="viewSessionsByCourse('${c.code}')" class="w-full text-left bg-white p-5 rounded-2xl border shadow-sm hover:border-blue-500 transition-all group">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-blue-500 uppercase">${c.code}</p>
+                                        <h4 class="font-bold text-slate-800">${c.name}</h4>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- Session Details -->
+                    <div id="session-details-area" class="lg:col-span-8 bg-white rounded-3xl border shadow-sm p-12 flex flex-col items-center justify-center text-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-4">
+                            <i data-lucide="calendar-days" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-slate-800 font-bold">Select a course</h4>
+                        <p class="text-slate-400 text-sm">Click a course on the left to see individual session logs and attendee lists.</p>
+                    </div>
                 </div>
             `;
+            lucide.createIcons();
         }
 
-        // --- CSV HANDLING ---
+        function viewSessionsByCourse(courseCode) {
+            const area = document.getElementById('session-details-area');
+            const courseSessions = sessions.filter(s => s.courseCode === courseCode);
+            
+            area.innerHTML = `
+                <div class="w-full text-left flex flex-col h-full">
+                    <div class="mb-8">
+                        <h4 class="text-xl font-bold text-slate-800">${courseCode} Session History</h4>
+                        <p class="text-slate-400 text-sm font-medium">Recorded classroom sessions for this module.</p>
+                    </div>
+
+                    ${courseSessions.length ? `
+                        <div class="space-y-4">
+                            ${courseSessions.map(sess => `
+                                <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase">Session Date</p>
+                                        <p class="font-bold text-slate-800">${sess.date}</p>
+                                        <p class="text-xs text-slate-500">${sess.time}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase">Attendance</p>
+                                        <p class="font-bold text-blue-600">${sess.attendees.length} Students</p>
+                                    </div>
+                                    <button onclick="viewSessionAttendees('${sess.id}')" class="bg-white border text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">View List</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="flex-1 flex flex-col items-center justify-center py-20">
+                            <p class="text-slate-300 font-bold">No sessions found for this course.</p>
+                        </div>
+                    `}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function viewSessionAttendees(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            const attendeeList = students.filter(s => session.attendees.includes(s.matric));
+            
+            showModal(`
+                <div class="mb-6">
+                    <h4 class="text-lg font-bold">${session.courseCode} - Attendance List</h4>
+                    <p class="text-xs text-slate-400">${session.date} | ${session.time}</p>
+                </div>
+                <div class="max-h-96 overflow-y-auto space-y-3">
+                    ${attendeeList.length ? attendeeList.map(s => `
+                        <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <img src="${s.picture}" class="w-10 h-10 rounded-lg" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
+                            <div>
+                                <p class="font-bold text-sm">${s.firstName} ${s.lastName}</p>
+                                <p class="text-[10px] text-slate-400 font-mono">${s.matric}</p>
+                            </div>
+                            <div class="ml-auto">
+                                <span class="text-[9px] font-bold px-2 py-1 bg-green-100 text-green-600 rounded">PRESENT</span>
+                            </div>
+                        </div>
+                    `).join('') : `<p class="text-center py-8 text-slate-400">No one attended this session.</p>`}
+                </div>
+            `);
+            document.getElementById('modal-title').innerText = "Detailed Attendance";
+        }
+
+        // --- MASTER CSV HANDLER ---
         function downloadCSVTemplate() {
             const headers = "Picture_URL,FirstName,LastName,MatricNumber,Email,PhoneNumber,CourseCode\n";
-            const example = "https://i.pravatar.cc/150,John,Doe,2024-ABC-001,john@edu.com,+234123456,CS101\n";
-            const blob = new Blob([headers + example], { type: 'text/csv' });
+            const row1 = "https://i.pravatar.cc/150,John,Doe,2024-CSC-100,john@edu.com,+234800,CS101\n";
+            const row2 = "https://i.pravatar.cc/150,Jane,Smith,2024-PHY-200,jane@edu.com,+234801,PHY201\n";
+            
+            const blob = new Blob([headers + row1 + row2], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('hidden', '');
             a.setAttribute('href', url);
-            a.setAttribute('download', 'AttendX_Student_Template.csv');
+            a.setAttribute('download', 'AttendX_Master_Registry.csv');
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showToast("Template downloaded!");
+            showToast("Master template downloaded.");
         }
 
         function handleStudentCSVImport(event) {
@@ -342,175 +379,177 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                const rows = text.split('\n').slice(1); // Skip headers
+                const rows = text.split('\n').slice(1);
                 let count = 0;
 
                 rows.forEach(row => {
                     const cols = row.split(',');
                     if (cols.length >= 6 && cols[1].trim()) {
-                        students.push({
-                            picture: cols[0].trim() || `https://ui-avatars.com/api/?name=${cols[1]}+${cols[2]}`,
-                            firstName: cols[1].trim(),
-                            lastName: cols[2].trim(),
-                            matric: cols[3].trim(),
-                            email: cols[4].trim(),
-                            phone: cols[5].trim(),
-                            course: cols[6]?.trim() || 'CS101',
-                            rate: 100 // Default 100% for new imports
-                        });
-                        count++;
+                        const matric = cols[3].trim();
+                        // Prevent duplicates
+                        if (!students.find(s => s.matric === matric)) {
+                            students.push({
+                                picture: cols[0].trim() || `https://ui-avatars.com/api/?name=${cols[1]}+${cols[2]}`,
+                                firstName: cols[1].trim(),
+                                lastName: cols[2].trim(),
+                                matric: matric,
+                                email: cols[4].trim(),
+                                phone: cols[5].trim(),
+                                course: cols[6]?.trim() || 'GENERAL',
+                                rate: 100 
+                            });
+                            count++;
+                        }
                     }
                 });
 
-                showToast(`Successfully imported ${count} students!`);
+                showToast(`Imported ${count} new student records.`);
                 switchView('dashboard');
             };
             reader.readAsText(file);
         }
 
-        // --- REMAINDER OF APP LOGIC ---
-        function renderCourses(el) {
-            el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${courses.map((c, index) => `
-                        <div class="bg-white p-6 rounded-3xl border shadow-sm flex flex-col justify-between">
-                            <div>
-                                <div class="flex justify-between items-start mb-4">
-                                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                                        <i data-lucide="book" class="w-5 h-5"></i>
-                                    </div>
-                                    <button onclick="editCourse(${index})" class="text-slate-300 hover:text-blue-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                                </div>
-                                <h4 class="font-bold text-slate-800">${c.name}</h4>
-                                <p class="text-[10px] text-slate-400 font-bold mb-2 uppercase">${c.code}</p>
-                                <p class="text-xs text-slate-500 mb-4">${c.instructor}</p>
-                            </div>
-                            <button onclick="quickStart('${c.code}')" class="w-full bg-slate-50 hover:bg-blue-600 hover:text-white py-2 rounded-lg text-xs font-bold transition-all">Start Session</button>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        function renderHistory(el) {
+        // --- OTHER UTILS ---
+        function renderStudents(el) {
             el.innerHTML = `
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 border-b text-[10px] text-slate-400 uppercase font-bold">
                             <tr>
-                                <th class="px-6 py-4">Date & Time</th>
                                 <th class="px-6 py-4">Student</th>
-                                <th class="px-6 py-4">Course</th>
-                                <th class="px-6 py-4">Method</th>
+                                <th class="px-6 py-4">Matriculation</th>
+                                <th class="px-6 py-4">Email</th>
+                                <th class="px-6 py-4">Assigned Course</th>
                                 <th class="px-6 py-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y text-sm">
-                            ${logs.length ? logs.slice().reverse().map((log, index) => `
-                                <tr>
-                                    <td class="px-6 py-4">
-                                        <span class="font-bold text-slate-800">${log.date}</span><br>
-                                        <span class="text-[10px] text-slate-400 font-bold uppercase">${log.time}</span>
+                            ${students.map((s, index) => `
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-6 py-4 flex items-center gap-3">
+                                        <img src="${s.picture}" class="w-10 h-10 rounded-xl" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}+${s.lastName}'">
+                                        <div class="font-bold text-slate-800">${s.firstName} ${s.lastName}</div>
                                     </td>
-                                    <td class="px-6 py-4 font-bold text-slate-600">${log.studentName}</td>
-                                    <td class="px-6 py-4 text-slate-500">${log.courseCode}</td>
-                                    <td class="px-6 py-4 uppercase text-[10px] font-bold text-slate-400">${log.method}</td>
-                                    <td class="px-6 py-4">
-                                        <button onclick="editLog(${logs.length - 1 - index})" class="p-2 text-slate-400 hover:text-blue-600"><i data-lucide="calendar" class="w-4 h-4"></i></button>
+                                    <td class="px-6 py-4 font-mono text-xs text-slate-500">${s.matric}</td>
+                                    <td class="px-6 py-4 text-slate-400 font-medium">${s.email}</td>
+                                    <td class="px-6 py-4 font-bold text-blue-500 text-xs">${s.course}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button onclick="editStudent(${index})" class="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-all"><i data-lucide="user-cog" class="w-4 h-4"></i></button>
                                     </td>
                                 </tr>
-                            `).join('') : `<tr><td colspan="5" class="px-6 py-20 text-center text-slate-300 font-medium">No records found.</td></tr>`}
+                            `).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
+            lucide.createIcons();
         }
 
-        function renderZoom(el) {
+        function renderCourses(el) {
             el.innerHTML = `
-                <div class="max-w-2xl mx-auto bg-white p-8 rounded-3xl border shadow-sm">
-                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                        <i data-lucide="upload" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Import Zoom Attendance</h3>
-                    <p class="text-slate-500 text-sm mb-6">Select a course and upload your CSV report to sync meeting attendance records automatically.</p>
-                    
-                    <div class="space-y-4 mb-8">
-                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Course Target</label>
-                            <select id="zoom-course" class="w-full border rounded-xl px-4 py-3 bg-slate-50 outline-none">
-                                ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
-                            </select>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${courses.map((c, index) => `
+                        <div class="bg-white p-8 rounded-3xl border shadow-sm flex flex-col justify-between hover:shadow-xl transition-all">
+                            <div>
+                                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                                    <i data-lucide="book-open-check" class="w-6 h-6"></i>
+                                </div>
+                                <h4 class="text-lg font-bold text-slate-800 mb-1">${c.name}</h4>
+                                <p class="text-[10px] text-slate-400 font-bold mb-4 uppercase tracking-wider">${c.code}</p>
+                                <p class="text-sm text-slate-500 flex items-center gap-2">
+                                    <i data-lucide="user" class="w-3.5 h-3.5"></i> ${c.instructor}
+                                </p>
+                            </div>
+                            <button onclick="quickStart('${c.code}')" class="mt-8 w-full bg-slate-900 text-white py-3 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all">Launch Live Session</button>
                         </div>
-                        <div class="border-2 border-dashed rounded-2xl p-8 text-center hover:border-indigo-400 transition-colors cursor-pointer" onclick="document.getElementById('zoom-file').click()">
-                            <input type="file" id="zoom-file" class="hidden" onchange="handleZoomImport(event)">
-                            <i data-lucide="file-text" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
-                            <p class="text-sm font-bold text-slate-600" id="file-name">Click to browse CSV</p>
-                        </div>
-                    </div>
-                    <button onclick="processZoom()" id="zoom-btn" disabled class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold disabled:opacity-50">Sync Records</button>
+                    `).join('')}
                 </div>
             `;
+            lucide.createIcons();
         }
 
-        function renderScanner(el) {
-            el.innerHTML = `
-                <div class="max-w-sm mx-auto bg-slate-900 rounded-[3rem] p-4 border-[8px] border-slate-800 h-[600px] flex flex-col justify-center items-center text-center text-white relative overflow-hidden shadow-2xl">
-                    <div class="w-64 h-64 border-2 border-blue-500/30 rounded-3xl relative mb-12 bg-slate-800/20 flex items-center justify-center">
-                        <i data-lucide="camera" class="w-12 h-12 text-white/5"></i>
-                        <div class="scan-line absolute inset-x-4 h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6]"></div>
-                    </div>
-                    <h4 class="text-xl font-bold mb-2 tracking-tight">Scanner Terminal</h4>
-                    <p class="text-slate-500 text-sm mb-12 px-8">Point camera at AttendX session QR to check-in.</p>
-                    <button onclick="simulateScan()" class="w-4/5 bg-blue-600 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-transform">Simulate Scan</button>
-                </div>
-            `;
+        function quickStart(code) {
+            const now = new Date();
+            activeSession = {
+                id: `sess_${Date.now()}`,
+                courseCode: code,
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                token: Math.random().toString(36).substring(7),
+                attendees: []
+            };
+            switchView('active-session');
         }
 
         function renderActiveQR(el) {
              el.innerHTML = `
                 <div class="max-w-xl mx-auto flex flex-col items-center">
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl border text-center w-full mb-8">
-                        <h3 class="text-2xl font-bold text-slate-800 mb-2">${activeSession.courseCode}</h3>
-                        <p class="text-slate-400 font-bold text-[10px] uppercase mb-8">Live Classroom Session</p>
-                        <div id="qrcode" class="mb-6 inline-block p-4 bg-slate-50 rounded-3xl relative group"></div>
-                        <div class="mb-8">
-                            <button onclick="copyShareLink()" class="flex items-center gap-2 mx-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-md">
-                                <i data-lucide="share-2" class="w-4 h-4"></i>
-                                Copy Share Link
-                            </button>
+                    <div class="bg-white p-12 rounded-[3rem] shadow-2xl border text-center w-full mb-8 relative">
+                        <div class="absolute top-8 right-8">
+                            <span class="flex h-3 w-3 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-blue-50 rounded-2xl text-left">
-                                <p class="text-[10px] font-bold text-blue-400 uppercase">Attendees</p>
-                                <p class="text-2xl font-bold text-blue-600" id="live-count">0</p>
+                        <h3 class="text-3xl font-bold text-slate-800 mb-2">${activeSession.courseCode}</h3>
+                        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-10">Live Classroom</p>
+                        <div id="qrcode" class="mb-10 inline-block p-6 bg-slate-50 rounded-[2.5rem] border shadow-inner"></div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="p-6 bg-blue-50 rounded-2xl text-left">
+                                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-tighter">Live Attendees</p>
+                                <p class="text-3xl font-bold text-blue-600" id="live-count">0</p>
                             </div>
-                            <div class="p-4 bg-slate-50 rounded-2xl text-left">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase">Started At</p>
-                                <p class="text-lg font-bold text-slate-800">${activeSession.time}</p>
+                            <div class="p-6 bg-slate-50 rounded-2xl text-left">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Session Start</p>
+                                <p class="text-xl font-bold text-slate-800">${activeSession.time}</p>
                             </div>
                         </div>
                     </div>
-                    <button onclick="endSession()" class="text-slate-400 hover:text-red-500 font-bold text-sm transition-colors">End Session</button>
+                    <button onclick="endSession()" class="bg-red-50 text-red-600 px-10 py-3 rounded-full font-bold text-sm hover:bg-red-600 hover:text-white transition-all">End & Save Session</button>
                 </div>
             `;
             setTimeout(() => {
                 const qrContainer = document.getElementById("qrcode");
-                new QRCode(qrContainer, { text: `https://attendx.edu/checkin?session=${activeSession.token}`, width: 256, height: 256, colorDark: "#0f172a", colorLight: "#f8fafc", correctLevel: QRCode.CorrectLevel.H });
+                new QRCode(qrContainer, { text: `https://attendx.edu/in?s=${activeSession.token}`, width: 220, height: 220, colorDark: "#0f172a", colorLight: "#f8fafc" });
                 lucide.createIcons();
             }, 100);
         }
 
-        function copyShareLink() {
-            if (!activeSession) return;
-            const shareText = `📝 Attendance for ${activeSession.courseCode}\n🔗 Link: https://attendx.edu/checkin?session=${activeSession.token}`;
-            const textArea = document.createElement("textarea");
-            textArea.value = shareText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            showToast("Copied to clipboard!");
+        function endSession() {
+            sessions.push({...activeSession});
+            showToast("Session saved to history.");
+            activeSession = null;
+            switchView('sessions');
+        }
+
+        function renderScanner(el) {
+            el.innerHTML = `
+                <div class="max-w-sm mx-auto bg-slate-900 rounded-[3rem] p-4 border-[10px] border-slate-800 h-[640px] flex flex-col justify-center items-center text-center text-white relative overflow-hidden shadow-2xl">
+                    <div class="w-64 h-64 border-2 border-blue-500/30 rounded-3xl relative mb-12 bg-slate-800/40 flex items-center justify-center">
+                         <div class="scan-line absolute inset-x-6 h-1 bg-blue-500 shadow-[0_0_20px_#3b82f6]"></div>
+                    </div>
+                    <h4 class="text-2xl font-bold mb-4 tracking-tight">Camera Active</h4>
+                    <p class="text-slate-500 text-sm mb-12 px-10">Searching for secure session check-in QR codes...</p>
+                    <button onclick="simulateScan()" class="w-4/5 bg-blue-600 py-4 rounded-2xl font-bold hover:bg-blue-500 shadow-xl active:scale-95 transition-all">Manual Check-In</button>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function simulateScan() {
+            if(!activeSession) return showToast("No active session to join.");
+            // Filter students assigned to this course
+            const eligible = students.filter(s => s.course === activeSession.courseCode);
+            if(!eligible.length) return showToast("No students assigned to this course.");
+            
+            const randomStudent = eligible[Math.floor(Math.random() * eligible.length)];
+            if(!activeSession.attendees.includes(randomStudent.matric)) {
+                activeSession.attendees.push(randomStudent.matric);
+                document.getElementById('live-count').innerText = activeSession.attendees.length;
+                showToast(`${randomStudent.firstName} checked in successfully!`);
+            } else {
+                showToast("Student already checked in.");
+            }
         }
 
         function showModal(content) {
@@ -518,8 +557,8 @@
             const body = document.getElementById('modal-body');
             body.innerHTML = `
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold" id="modal-title">Edit Entry</h3>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+                    <h3 class="text-xl font-bold" id="modal-title">System Alert</h3>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i data-lucide="circle-x" class="w-6 h-6"></i></button>
                 </div>
                 ${content}
             `;
@@ -533,109 +572,6 @@
         function closeModal() {
             document.getElementById('modal-body').classList.add('scale-95', 'opacity-0');
             setTimeout(() => document.getElementById('modal-backdrop').classList.add('hidden'), 200);
-        }
-
-        function editStudent(index) {
-            const s = students[index];
-            showModal(`
-                <div class="space-y-3">
-                    <input type="text" id="edit-f-name" value="${s.firstName}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="First Name">
-                    <input type="text" id="edit-l-name" value="${s.lastName}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Last Name">
-                    <input type="text" id="edit-matric" value="${s.matric}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Matric No.">
-                    <input type="email" id="edit-email" value="${s.email}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Email">
-                    <input type="text" id="edit-phone" value="${s.phone}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Phone">
-                    <input type="text" id="edit-pic" value="${s.picture}" class="w-full border p-3 rounded-xl bg-slate-50 text-sm font-medium" placeholder="Picture URL">
-                    <button onclick="saveStudent(${index})" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold mt-4">Update Student</button>
-                </div>
-            `);
-            document.getElementById('modal-title').innerText = "Update Student Info";
-        }
-
-        function saveStudent(index) {
-            students[index].firstName = document.getElementById('edit-f-name').value;
-            students[index].lastName = document.getElementById('edit-l-name').value;
-            students[index].matric = document.getElementById('edit-matric').value;
-            students[index].email = document.getElementById('edit-email').value;
-            students[index].phone = document.getElementById('edit-phone').value;
-            students[index].picture = document.getElementById('edit-pic').value;
-            closeModal();
-            switchView('students');
-            showToast("Profile updated.");
-        }
-
-        function openCreateCourseModal() {
-            showModal(`
-                <div class="space-y-4">
-                    <input type="text" id="new-c-code" placeholder="CS101" class="w-full border p-3 rounded-xl bg-slate-50 font-bold uppercase">
-                    <input type="text" id="new-c-name" placeholder="Course Title" class="w-full border p-3 rounded-xl bg-slate-50 font-medium">
-                    <input type="text" id="new-c-instr" placeholder="Instructor Name" class="w-full border p-3 rounded-xl bg-slate-50 font-medium">
-                    <button onclick="createNewCourse()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">Create Course</button>
-                </div>
-            `);
-            document.getElementById('modal-title').innerText = "Add New Course";
-        }
-
-        function createNewCourse() {
-            const code = document.getElementById('new-c-code').value;
-            const name = document.getElementById('new-c-name').value;
-            const instr = document.getElementById('new-c-instr').value;
-            if(code && name) {
-                courses.push({ code, name, instructor: instr });
-                closeModal();
-                switchView('courses');
-                showToast("Course created.");
-            }
-        }
-
-        function quickStart(code) {
-            const now = new Date();
-            activeSession = {
-                courseCode: code,
-                date: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                token: `SESS_${Date.now()}`,
-                attendees: 0
-            };
-            switchView('active-session');
-        }
-
-        function endSession() {
-            activeSession = null;
-            switchView('dashboard');
-        }
-
-        function simulateScan() {
-            if(!activeSession) return showToast("No active session.");
-            const student = students[Math.floor(Math.random() * students.length)];
-            const now = new Date();
-            logs.push({
-                studentName: `${student.firstName} ${student.lastName}`,
-                courseCode: activeSession.courseCode,
-                date: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                method: 'qr'
-            });
-            activeSession.attendees++;
-            const count = document.getElementById('live-count');
-            if(count) count.innerText = activeSession.attendees;
-            showToast(`${student.firstName} checked in.`);
-        }
-
-        function handleZoomImport(event) {
-            if(event.target.files.length) {
-                document.getElementById('file-name').innerText = event.target.files[0].name;
-                document.getElementById('zoom-btn').disabled = false;
-            }
-        }
-
-        function processZoom() {
-            const code = document.getElementById('zoom-course').value;
-            const btn = document.getElementById('zoom-btn');
-            btn.innerText = "Syncing...";
-            setTimeout(() => {
-                showToast(`Imported Zoom participants for ${code}.`);
-                switchView('sessions');
-            }, 1000);
         }
 
         function showToast(msg) {
