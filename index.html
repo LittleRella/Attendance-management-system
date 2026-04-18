@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Advanced Admin</title>
+    <title>AttendX | Advanced Admin & Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -28,7 +28,7 @@
 
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-slate-950 text-white p-6 fixed h-full flex flex-col z-30">
+        <aside id="sidebar" class="w-64 bg-slate-950 text-white p-6 fixed h-full flex flex-col z-30 transition-transform duration-300">
             <div class="flex items-center gap-3 mb-10 px-2">
                 <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/40"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
                 <h1 class="font-black text-xl tracking-tighter">ATTENDX</h1>
@@ -54,16 +54,6 @@
             </nav>
 
             <div class="mt-auto space-y-4">
-                <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Admin Data Tools</p>
-                    <button onclick="downloadCSVTemplate()" class="w-full flex items-center gap-2 text-xs text-blue-400 font-bold mb-3 hover:text-blue-300">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i> Download Template
-                    </button>
-                    <button onclick="document.getElementById('csv-upload').click()" class="w-full flex items-center gap-2 text-xs text-slate-400 font-bold hover:text-white">
-                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CSV
-                    </button>
-                    <input type="file" id="csv-upload" class="hidden" accept=".csv" onchange="handleCSVImport(event)">
-                </div>
                 <button onclick="switchView('qr-launcher')" id="btn-qr" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl text-sm font-black shadow-xl shadow-blue-900/40 transition-all active:scale-95">
                     <i data-lucide="qr-code" class="w-5 h-5"></i> ACTIVATE QR
                 </button>
@@ -71,13 +61,13 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="ml-64 flex-1 p-10">
-            <header class="flex justify-between items-center mb-10">
+        <main id="main-content" class="ml-64 flex-1 p-10 transition-all duration-300">
+            <header id="main-header" class="flex justify-between items-center mb-10">
                 <div>
                     <h2 id="page-title" class="text-3xl font-black text-slate-900 tracking-tight">Dashboard</h2>
                     <p id="page-subtitle" class="text-slate-400 text-sm font-medium">Monitoring academic compliance.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3" id="header-actions">
                     <select id="global-course-filter" onchange="refreshView()" class="bg-white border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold outline-none focus:border-blue-600 transition-all cursor-pointer">
                         <option value="ALL">All Courses</option>
                     </select>
@@ -88,9 +78,28 @@
         </main>
     </div>
 
-    <!-- Modal Base -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center hidden">
-        <div class="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl p-10 transform transition-all scale-95 opacity-0" id="modal-body"></div>
+    <!-- Student Scanning View Overlay (Simulated App) -->
+    <div id="student-view" class="fixed inset-0 bg-slate-50 z-[100] hidden flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-full max-w-md bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="user-check" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-black mb-2">Student Check-in</h2>
+            <p id="student-view-info" class="text-slate-500 text-sm mb-8">Please select your name to verify attendance.</p>
+            
+            <div class="space-y-6 text-left">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Select Your Name</label>
+                    <select id="student-select" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600 appearance-none">
+                        <option value="">Choose from list...</option>
+                    </select>
+                </div>
+                <button onclick="submitStudentAttendance()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black hover:bg-blue-600 transition-all">
+                    CONFIRM ATTENDANCE
+                </button>
+                <button onclick="closeStudentView()" class="w-full text-slate-400 font-bold text-sm mt-4">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Notification -->
@@ -102,15 +111,14 @@
     <script>
         // --- DATA STATE ---
         let courses = [
-            { id: 'c1', code: 'CSC101', name: 'Computer Science' },
-            { id: 'c2', code: 'PHY201', name: 'Applied Physics' },
-            { id: 'c3', code: 'GST111', name: 'Communication' }
+            { id: 'c1', code: 'CSC101', name: 'Intro to Programming' },
+            { id: 'c2', code: 'PHY201', name: 'General Physics II' }
         ];
 
         let students = [
-            { id: 's1', matric: '24/CSC/001', firstName: 'Faith', lastName: 'Okon', email: 'faith@edu.com', phone: '0801', pic: 'https://i.pravatar.cc/150?u=1', courseCode: 'CSC101', sessions: Array(22).fill(0) },
-            { id: 's2', matric: '24/CSC/002', firstName: 'John', lastName: 'Smith', email: 'john@edu.com', phone: '0802', pic: 'https://i.pravatar.cc/150?u=2', courseCode: 'CSC101', sessions: Array(22).fill(0) },
-            { id: 's3', matric: '24/PHY/005', firstName: 'Amara', lastName: 'Cole', email: 'amara@edu.com', phone: '0803', pic: 'https://i.pravatar.cc/150?u=3', courseCode: 'PHY201', sessions: Array(22).fill(0) }
+            { id: 's1', matric: '24/CSC/001', firstName: 'Faith', lastName: 'Okon', courseCode: 'CSC101', sessions: Array(22).fill(0), pic: 'https://i.pravatar.cc/150?u=1' },
+            { id: 's2', matric: '24/CSC/002', firstName: 'John', lastName: 'Smith', courseCode: 'CSC101', sessions: Array(22).fill(0), pic: 'https://i.pravatar.cc/150?u=2' },
+            { id: 's3', matric: '24/PHY/005', firstName: 'Amara', lastName: 'Cole', courseCode: 'PHY201', sessions: Array(22).fill(0), pic: 'https://i.pravatar.cc/150?u=3' }
         ];
 
         let activeView = 'dashboard';
@@ -176,7 +184,6 @@
         function renderDashboard(el) {
             const filter = document.getElementById('global-course-filter').value;
             const list = filter === 'ALL' ? students : students.filter(s => s.courseCode === filter);
-            
             const totalSessPossible = list.length * 22;
             const actualPresent = list.reduce((acc, s) => acc + s.sessions.filter(v => v === 1).length, 0);
             const rate = totalSessPossible ? ((actualPresent / totalSessPossible) * 100).toFixed(1) : 0;
@@ -191,9 +198,8 @@
                         </div>
                     </div>
                     <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student Count</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Students</p>
                         <h3 class="text-4xl font-black text-slate-900">${list.length}</h3>
-                        <p class="text-xs text-slate-400 font-bold mt-2">Active in ${filter}</p>
                     </div>
                     <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Modules</p>
@@ -203,43 +209,28 @@
             `;
         }
 
-        // --- COURSE MANAGEMENT ---
+        // --- COURSES ---
         function renderCourses(el) {
             el.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                        <h4 class="font-black text-lg mb-6">Create New Module</h4>
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                        <h4 class="font-black text-lg mb-6">Add Module</h4>
                         <div class="space-y-4">
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Course Code</label>
-                                <input id="new-course-code" placeholder="e.g. CSC202" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Module Name</label>
-                                <input id="new-course-name" placeholder="e.g. Algorithms" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                            </div>
+                            <input id="new-course-code" placeholder="CSC101" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
+                            <input id="new-course-name" placeholder="Course Title" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
                             <button onclick="addCourse()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black hover:bg-blue-600 transition-all">Add Course</button>
                         </div>
                     </div>
-                    
                     <div class="lg:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
                         <table class="w-full text-left">
                             <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                                <tr>
-                                    <th class="px-8 py-5">Course Code</th>
-                                    <th class="px-8 py-5">Full Module Name</th>
-                                    <th class="px-8 py-5 text-right">Action</th>
-                                </tr>
+                                <tr><th class="px-8 py-5">Code</th><th class="px-8 py-5">Name</th><th class="px-8 py-5 text-right">Action</th></tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
                                 ${courses.map(c => `
-                                    <tr class="hover:bg-slate-50/50 transition-colors">
-                                        <td class="px-8 py-5">
-                                            <input value="${c.code}" onchange="updateCourseCode('${c.id}', this.value)" class="bg-transparent font-black text-blue-600 border-b border-transparent focus:border-blue-600 outline-none w-24">
-                                        </td>
-                                        <td class="px-8 py-5 font-bold text-slate-700">
-                                            <input value="${c.name}" onchange="updateCourseName('${c.id}', this.value)" class="bg-transparent border-b border-transparent focus:border-blue-600 outline-none w-full">
-                                        </td>
+                                    <tr>
+                                        <td class="px-8 py-5 font-black text-blue-600">${c.code}</td>
+                                        <td class="px-8 py-5 font-bold text-slate-700">${c.name}</td>
                                         <td class="px-8 py-5 text-right">
                                             <button onclick="deleteCourse('${c.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                         </td>
@@ -256,73 +247,37 @@
         function addCourse() {
             const code = document.getElementById('new-course-code').value.trim().toUpperCase();
             const name = document.getElementById('new-course-name').value.trim();
-            if (!code || !name) return showToast("Please fill all fields");
-            if (courses.some(c => c.code === code)) return showToast("Course code already exists");
-            
+            if (!code || !name) return showToast("Fields required");
             courses.push({ id: 'c' + Date.now(), code, name });
-            showToast("Course added successfully");
+            showToast("Course added");
             refreshView();
-        }
-
-        function updateCourseCode(id, newCode) {
-            const course = courses.find(c => c.id === id);
-            const oldCode = course.code;
-            course.code = newCode.trim().toUpperCase();
-            // Update all students enrolled in this course
-            students.forEach(s => {
-                if (s.courseCode === oldCode) s.courseCode = course.code;
-            });
-            showToast("Course code updated");
-            refreshView();
-        }
-
-        function updateCourseName(id, newName) {
-            const course = courses.find(c => c.id === id);
-            course.name = newName.trim();
-            showToast("Course name updated");
         }
 
         function deleteCourse(id) {
             courses = courses.filter(c => c.id !== id);
-            showToast("Course removed");
             refreshView();
         }
 
-        // --- REGISTRY MANAGEMENT ---
+        // --- REGISTRY ---
         function renderRegistry(el) {
             const filter = document.getElementById('global-course-filter').value;
             const list = filter === 'ALL' ? students : students.filter(s => s.courseCode === filter);
-
             el.innerHTML = `
                 <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                            <tr>
-                                <th class="px-8 py-5">Student Identity</th>
-                                <th class="px-8 py-5">Matric No.</th>
-                                <th class="px-8 py-5">Module Assignment</th>
-                                <th class="px-8 py-5 text-right">Action</th>
-                            </tr>
+                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5">Matric No.</th><th class="px-8 py-5">Course</th><th class="px-8 py-5 text-right">Action</th></tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
                             ${list.map(s => `
-                                <tr class="hover:bg-slate-50/50">
-                                    <td class="px-8 py-5">
-                                        <div class="flex items-center gap-3">
-                                            <img src="${s.pic}" class="w-10 h-10 rounded-xl bg-slate-100 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${s.firstName}'">
-                                            <div>
-                                                <input value="${s.firstName}" onchange="updateStudentField('${s.id}', 'firstName', this.value)" class="bg-transparent font-bold text-sm text-slate-800 outline-none w-20">
-                                                <input value="${s.lastName}" onchange="updateStudentField('${s.id}', 'lastName', this.value)" class="bg-transparent font-bold text-sm text-slate-800 outline-none w-20">
-                                            </div>
-                                        </div>
+                                <tr>
+                                    <td class="px-8 py-5 flex items-center gap-3">
+                                        <img src="${s.pic}" class="w-8 h-8 rounded-lg">
+                                        <span class="font-bold text-sm text-slate-800">${s.firstName} ${s.lastName}</span>
                                     </td>
+                                    <td class="px-8 py-5 font-mono text-xs text-slate-400">${s.matric}</td>
                                     <td class="px-8 py-5">
-                                        <input value="${s.matric}" onchange="updateStudentField('${s.id}', 'matric', this.value)" class="bg-transparent font-mono text-xs text-slate-400 outline-none w-full focus:text-blue-600">
-                                    </td>
-                                    <td class="px-8 py-5">
-                                        <select onchange="updateStudentField('${s.id}', 'courseCode', this.value)" class="bg-slate-50 border border-slate-100 rounded-lg px-2 py-1 text-[10px] font-black uppercase text-blue-600 outline-none">
-                                            ${courses.map(c => `<option value="${c.code}" ${s.courseCode === c.code ? 'selected' : ''}>${c.code}</option>`).join('')}
-                                        </select>
+                                        <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">${s.courseCode}</span>
                                     </td>
                                     <td class="px-8 py-5 text-right">
                                         <button onclick="deleteStudent('${s.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="user-minus" class="w-4 h-4"></i></button>
@@ -336,15 +291,8 @@
             lucide.createIcons();
         }
 
-        function updateStudentField(id, field, val) {
-            const student = students.find(s => s.id === id);
-            student[field] = val.trim();
-            showToast("Registry updated");
-        }
-
         function deleteStudent(id) {
             students = students.filter(s => s.id !== id);
-            showToast("Student removed from registry");
             refreshView();
         }
 
@@ -352,22 +300,19 @@
         function renderMatrix(el) {
             const filter = document.getElementById('global-course-filter').value;
             const list = filter === 'ALL' ? students : students.filter(s => s.courseCode === filter);
-
             el.innerHTML = `
                 <div class="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
                     <div class="space-y-4">
                         ${list.map(s => `
-                            <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl">
                                 <div class="w-40 shrink-0">
                                     <p class="font-bold text-slate-800 text-sm truncate">${s.firstName} ${s.lastName}</p>
-                                    <p class="text-[9px] font-black text-slate-400 uppercase">${s.matric}</p>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase">${s.courseCode}</p>
                                 </div>
-                                <div class="flex-1 overflow-x-auto no-scrollbar">
-                                    <div class="flex gap-1.5">
-                                        ${s.sessions.map((v, i) => `
-                                            <div onclick="toggleAttendance('${s.id}', ${i})" class="session-dot ${v === 1 ? 'present' : 'absent'} cursor-pointer hover:scale-125 transition-transform"></div>
-                                        `).join('')}
-                                    </div>
+                                <div class="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar">
+                                    ${s.sessions.map((v, i) => `
+                                        <div class="session-dot ${v === 1 ? 'present' : 'absent'}"></div>
+                                    `).join('')}
                                 </div>
                             </div>
                         `).join('')}
@@ -376,45 +321,23 @@
             `;
         }
 
-        function toggleAttendance(id, idx) {
-            const s = students.find(x => x.id === id);
-            s.sessions[idx] = s.sessions[idx] === 1 ? 0 : 1;
-            refreshView();
-        }
-
-        // --- QR LAUNCHER ---
+        // --- QR & STUDENT INTERACTION ---
         function renderQRLauncher(el) {
-            if (courses.length === 0) {
-                el.innerHTML = `<div class="p-20 text-center"><p class="text-slate-400 font-bold">Please add a course first.</p></div>`;
-                return;
-            }
             el.innerHTML = `
                 <div class="max-w-2xl mx-auto bg-white p-12 rounded-[3rem] border border-slate-100 shadow-xl text-center">
-                    <div class="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-                        <i data-lucide="zap" class="w-10 h-10"></i>
-                    </div>
                     <h3 class="text-3xl font-black text-slate-900 mb-2">Activate Attendance</h3>
-                    <p class="text-slate-400 mb-10 font-medium">Select a module and session number.</p>
-
+                    <p class="text-slate-400 mb-10 font-medium">Select a module to generate QR.</p>
                     <div class="grid grid-cols-2 gap-6 mb-8 text-left">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Module</label>
-                            <select id="launch-course" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                                ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Session (1-22)</label>
-                            <select id="launch-session" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                                ${Array.from({length: 22}, (_, i) => `<option value="${i+1}">Session ${i+1}</option>`).join('')}
-                            </select>
-                        </div>
+                        <select id="launch-course" class="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold">
+                            ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
+                        </select>
+                        <select id="launch-session" class="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold">
+                            ${Array.from({length: 22}, (_, i) => `<option value="${i+1}">Session ${i+1}</option>`).join('')}
+                        </select>
                     </div>
-
-                    <button onclick="startQRSession()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-lg hover:bg-blue-600 transition-all">GENERATE SECURE QR</button>
+                    <button onclick="startQRSession()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-lg hover:bg-blue-600 transition-all">GENERATE QR</button>
                 </div>
             `;
-            lucide.createIcons();
         }
 
         function startQRSession() {
@@ -423,8 +346,7 @@
             liveSession = {
                 course: course,
                 sessionIndex: sessionNum - 1,
-                expiry: Date.now() + (15 * 60 * 1000),
-                token: Math.random().toString(36).substring(7).toUpperCase()
+                expiry: Date.now() + (15 * 60 * 1000)
             };
             switchView('live-qr');
         }
@@ -432,29 +354,25 @@
         function renderLiveQR(el) {
             el.innerHTML = `
                 <div class="max-w-xl mx-auto text-center">
-                    <div class="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-100 relative overflow-hidden mb-10">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+                    <div class="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-100 relative mb-10">
                         <div class="flex justify-between items-start mb-10">
-                            <div class="text-left">
-                                <p class="text-[10px] font-black text-blue-600 uppercase mb-1">${liveSession.course}</p>
-                                <h3 class="text-2xl font-black text-slate-900">Session ${liveSession.sessionIndex + 1}</h3>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-red-500 uppercase mb-1 timer-animate">Expires In</p>
-                                <h3 id="timer-display" class="text-2xl font-black text-slate-900 font-mono">15:00</h3>
-                            </div>
+                            <div class="text-left"><p class="text-[10px] font-black text-blue-600 uppercase">${liveSession.course}</p><h3 class="text-2xl font-black">Session ${liveSession.sessionIndex + 1}</h3></div>
+                            <div class="text-right"><p class="text-[10px] font-black text-red-500 uppercase timer-animate tracking-widest">Active</p><h3 id="timer-display" class="text-2xl font-black font-mono">15:00</h3></div>
                         </div>
-                        <div id="qrcode" class="mb-10 p-4 inline-block bg-slate-50 rounded-[2.5rem] border-4 border-slate-50"></div>
-                        <button onclick="simulateStudentScan()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">Manual Check-in (Mock)</button>
+                        <div id="qrcode" class="mb-10 p-4 inline-block bg-slate-50 rounded-[2.5rem]"></div>
+                        
+                        <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-sm font-bold text-yellow-700 flex items-center gap-3 justify-center mb-6">
+                            <i data-lucide="info" class="w-4 h-4"></i>
+                            Students: Scan with phone to open selection list
+                        </div>
+
+                        <button onclick="openStudentView()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl shadow-blue-500/30">SIMULATE STUDENT SCAN</button>
                     </div>
-                    <button onclick="endLiveSession()" class="text-slate-400 hover:text-red-500 font-black text-sm flex items-center gap-2 mx-auto"><i data-lucide="power" class="w-4 h-4"></i> DISMISS SESSION</button>
+                    <button onclick="endLiveSession()" class="text-slate-400 hover:text-red-500 font-black text-sm">END SESSION</button>
                 </div>
             `;
             setTimeout(() => {
-                new QRCode(document.getElementById("qrcode"), {
-                    text: `ATTENDX-${liveSession.course}-${liveSession.token}`,
-                    width: 250, height: 250, colorDark: "#020617", colorLight: "#f8fafc"
-                });
+                new QRCode(document.getElementById("qrcode"), { text: "student-scan-token", width: 220, height: 220, colorDark: "#020617", colorLight: "#f8fafc" });
                 startTimer();
                 lucide.createIcons();
             }, 100);
@@ -471,70 +389,52 @@
             }, 1000);
         }
 
-        function simulateStudentScan() {
+        function endLiveSession() { clearInterval(timerInterval); liveSession = null; switchView('dashboard'); }
+
+        // --- STUDENT VIEW LOGIC ---
+        function openStudentView() {
+            if (!liveSession) return;
+            const modal = document.getElementById('student-view');
+            const select = document.getElementById('student-select');
+            
+            // Filter only students in this course who haven't signed yet
             const candidates = students.filter(s => s.courseCode === liveSession.course && s.sessions[liveSession.sessionIndex] === 0);
-            if (!candidates.length) return showToast("No more pending students for this session.");
-            const lucky = candidates[Math.floor(Math.random() * candidates.length)];
-            lucky.sessions[liveSession.sessionIndex] = 1;
-            showToast(`Verified: ${lucky.firstName} ${lucky.lastName}`);
+            
+            select.innerHTML = '<option value="">Choose from list...</option>';
+            candidates.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.innerText = `${s.firstName} ${s.lastName} (${s.matric})`;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('student-view-info').innerText = `Signing in for ${liveSession.course} - Session ${liveSession.sessionIndex + 1}`;
+            modal.classList.remove('hidden');
+            lucide.createIcons();
         }
 
-        function endLiveSession() {
-            clearInterval(timerInterval);
-            liveSession = null;
-            switchView('dashboard');
+        function closeStudentView() {
+            document.getElementById('student-view').classList.add('hidden');
         }
 
-        // --- CSV HELPERS ---
-        function downloadCSVTemplate() {
-            const headers = "PicURL,FirstName,LastName,Matric,Email,Phone,CourseCode\n";
-            const sample = "https://i.pravatar.cc/150,Faith,Okon,24/CSC/001,faith@edu.com,0801,CSC101\n";
-            const blob = new Blob([headers + sample], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'AttendX_Student_Registry.csv';
-            a.click();
-            showToast("Template ready.");
-        }
-
-        function handleCSVImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const rows = e.target.result.split('\n').slice(1);
-                rows.forEach(row => {
-                    const cols = row.split(',');
-                    if (cols.length >= 6 && cols[1]) {
-                        students.push({
-                            id: 's' + Date.now() + Math.random(),
-                            pic: cols[0].trim() || `https://ui-avatars.com/api/?name=${cols[1]}`,
-                            firstName: cols[1].trim(),
-                            lastName: cols[2].trim(),
-                            matric: cols[3].trim(),
-                            email: cols[4].trim(),
-                            phone: cols[5].trim(),
-                            courseCode: cols[6]?.trim() || 'ALL',
-                            sessions: Array(22).fill(0)
-                        });
-                    }
-                });
-                showToast("Registry Imported");
-                switchView('students');
-            };
-            reader.readAsText(file);
+        function submitStudentAttendance() {
+            const sid = document.getElementById('student-select').value;
+            if (!sid) return showToast("Please select your name");
+            
+            const student = students.find(s => s.id === sid);
+            student.sessions[liveSession.sessionIndex] = 1;
+            
+            showToast(`Attendance recorded for ${student.firstName}!`);
+            closeStudentView();
+            // In a real app, the admin dashboard would update via websockets/polling. 
+            // Here we just keep the live view running.
         }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toast-text').innerText = msg;
-            t.classList.remove('translate-y-32');
-            t.classList.add('translate-y-0');
-            setTimeout(() => {
-                t.classList.remove('translate-y-0');
-                t.classList.add('translate-y-32');
-            }, 3000);
+            t.classList.remove('translate-y-32'); t.classList.add('translate-y-0');
+            setTimeout(() => { t.classList.remove('translate-y-0'); t.classList.add('translate-y-32'); }, 3000);
         }
 
         window.onload = () => switchView('dashboard');
