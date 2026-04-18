@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AttendX | Attendance Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-transition { transition: all 0.3s ease; }
+        @keyframes scan-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(220px); }
+        }
+        .scan-line { animation: scan-bounce 2s infinite ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 h-screen text-white p-6 fixed left-0 top-0 flex flex-col border-r border-slate-800 z-20">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <i data-lucide="user-check" class="w-6 h-6"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight text-white">AttendX</h1>
+        </div>
+        
+        <nav class="space-y-2 flex-1">
+            <button onclick="setView('admin_dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-lg shadow-blue-900/20">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Dashboard</span>
+            </button>
+            <button onclick="setView('student_roster')" id="nav-roster" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Students</span>
+            </button>
+            <button onclick="setView('faculty_sessions')" id="nav-sessions" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="clock" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Sessions</span>
+            </button>
+            <button onclick="setView('reports')" id="nav-reports" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                <span class="font-medium text-sm">Reports</span>
+            </button>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-800">
+            <button onclick="setView('qr_scanner')" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl transition-colors text-sm font-medium border border-slate-700">
+                <i data-lucide="qr-code" class="w-[18px] h-[18px]"></i>
+                Student Scan (Sim)
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 p-8 min-h-screen">
+        <!-- Top Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h2 id="view-title" class="text-2xl font-bold text-slate-800 capitalize">Dashboard</h2>
+                <p class="text-slate-500 text-sm">Managing academic attendance seamlessly.</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="flex items-center gap-2 bg-white px-4 py-2 border rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    Import CSV
+                </button>
+                <button onclick="createSession('Applied Physics')" class="flex items-center gap-2 bg-blue-600 px-4 py-2 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-md transition-all">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    New Session
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div id="content-area" class="max-w-6xl mx-auto">
+            <!-- Default Dashboard Content will be injected here -->
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-50 border border-slate-700 hidden">
+        <i data-lucide="check-circle-2" class="text-green-400 w-[18px] h-[18px]"></i>
+        <span id="toast-message" class="text-sm font-medium"></span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let currentView = 'admin_dashboard';
+        const students = [
+            { id: 'S001', name: 'Alice Johnson', email: 'alice@univ.edu', attendance: 85 },
+            { id: 'S002', name: 'Bob Smith', email: 'bob@univ.edu', attendance: 92 },
+            { id: 'S003', name: 'Charlie Davis', email: 'charlie@univ.edu', attendance: 78 },
+            { id: 'S004', name: 'Diana Ross', email: 'diana@univ.edu', attendance: 95 },
+            { id: 'S005', name: 'Edward Norton', email: 'edward@univ.edu', attendance: 64 }
+        ];
+        const sessions = [
+            { id: 'SES-101', course: 'Advanced React', date: '2023-10-24', status: 'Completed', presentCount: 45 },
+            { id: 'SES-102', course: 'Cloud Computing', date: '2023-10-25', status: 'Active', presentCount: 12 }
+        ];
+
+        // --- Core Functions ---
+        function setView(viewName) {
+            currentView = viewName;
+            updateNavigation();
+            renderContent();
+            document.getElementById('view-title').innerText = viewName.replace('_', ' ');
+            lucide.createIcons(); // Re-render icons
+        }
+
+        function triggerToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('animate-bounce');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('animate-bounce');
+            }, 3000);
+        }
+
+        function createSession(courseName) {
+            const id = 'SES-' + Math.floor(Math.random() * 900 + 100);
+            sessions.unshift({
+                id: id,
+                course: courseName,
+                date: new Date().toISOString().split('T')[0],
+                status: 'Active',
+                presentCount: 0
+            });
+            triggerToast(`Session started for ${courseName}`);
+            if (currentView === 'admin_dashboard' || currentView === 'faculty_sessions') {
+                renderContent();
+            }
+        }
+
+        function updateNavigation() {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-white";
+            });
+            const activeMap = {
+                'admin_dashboard': 'nav-dashboard',
+                'student_roster': 'nav-roster',
+                'faculty_sessions': 'nav-sessions',
+                'reports': 'nav-reports'
+            };
+            const activeId = activeMap[currentView];
+            if (activeId) {
+                document.getElementById(activeId).className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 bg-blue-600 text-white shadow-lg shadow-blue-900/20";
+            }
+        }
+
+        function renderContent() {
+            const container = document.getElementById('content-area');
+            
+            if (currentView === 'admin_dashboard') {
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        ${renderStatCard('Avg. Attendance', '84.2%', '+2.4%', 'bar-chart-3', 'text-blue-600', 'bg-blue-50')}
+                        ${renderStatCard('Total Students', '1,248', 'New Upload', 'users', 'text-purple-600', 'bg-purple-50')}
+                        ${renderStatCard('Active Sessions', '12', 'Live Now', 'clock', 'text-green-600', 'bg-green-50')}
+                        
+                        <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-bold text-slate-800">Recent Sessions</h3>
+                                <button class="text-blue-600 text-sm font-medium">View All</button>
+                            </div>
+                            <div class="space-y-4">
+                                ${sessions.map(s => `
+                                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors">
+                                        <div class="flex items-center gap-4">
+                                            <div class="p-2 rounded-lg ${s.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'}">
+                                                <i data-lucide="qr-code" class="w-5 h-5"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-800">${s.course}</p>
+                                                <p class="text-xs text-slate-500">${s.date} • ID: ${s.id}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-bold text-slate-700">${s.presentCount} present</p>
+                                            <p class="text-[10px] font-bold uppercase tracking-wider ${s.status === 'Active' ? 'text-green-600' : 'text-slate-400'}">${s.status}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border flex flex-col items-center justify-center text-center">
+                            <div class="bg-blue-50 p-4 rounded-full mb-4">
+                                <i data-lucide="upload" class="text-blue-600 w-8 h-8"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-800 mb-2">Zoom Integration</h3>
+                            <p class="text-sm text-slate-500 mb-6">Merge online participant reports with physical classroom scans automatically.</p>
+                            <button onclick="triggerToast('Merging Zoom Report... 15 matches found.')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium text-sm hover:bg-slate-800 transition-all">
+                                Upload Zoom CSV
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (currentView === 'student_roster') {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                        <div class="p-4 border-b bg-slate-50/50 flex items-center gap-3">
+                            <i data-lucide="search" class="text-slate-400 w-[18px] h-[18px]"></i>
+                            <input type="text" placeholder="Search by name, ID or email..." class="bg-transparent border-none focus:ring-0 text-sm w-full outline-none" />
+                        </div>
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-6 py-4">Student</th>
+                                    <th className="px-6 py-4">ID</th>
+                                    <th class="px-6 py-4">Attendance %</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y text-sm">
+                                ${students.map(s => `
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-6 py-4 font-medium text-slate-800">
+                                            <div>
+                                                ${s.name}
+                                                <div class="text-[10px] text-slate-400 font-normal">${s.email}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-slate-500 font-mono">${s.id}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden min-w-[80px]">
+                                                    <div class="h-full rounded-full ${s.attendance > 85 ? 'bg-green-500' : s.attendance > 75 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${s.attendance}%"></div>
+                                                </div>
+                                                <span class="font-bold text-slate-700">${s.attendance}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded-md text-[10px] font-bold ${s.attendance > 75 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}">
+                                                ${s.attendance > 75 ? 'GOOD' : 'LOW ATTENDANCE'}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <button class="text-blue-600 hover:underline font-medium">History</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentView === 'faculty_sessions') {
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-3xl shadow-xl border text-center max-w-md mx-auto">
+                        <div class="inline-flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold mb-6">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            SESSION LIVE
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">Scan to Attend</h3>
+                        <p class="text-slate-500 text-sm mb-8">Course: Applied Physics 101</p>
+                        
+                        <div class="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200 mb-8 inline-block relative overflow-hidden group">
+                            <div class="w-48 h-48 bg-white shadow-inner flex items-center justify-center relative">
+                                <i data-lucide="qr-code" class="w-32 h-32 text-slate-800"></i>
+                                <div class="absolute inset-0 border-4 border-blue-500/10 group-hover:border-blue-500/30 transition-all rounded-lg"></div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="setView('admin_dashboard')" class="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all">
+                            Close Session
+                        </button>
+                    </div>
+                `;
+            } else if (currentView === 'qr_scanner') {
+                container.innerHTML = `
+                    <div class="max-w-md mx-auto bg-slate-900 rounded-[2.5rem] p-4 shadow-2xl border-[8px] border-slate-800 relative h-[600px] overflow-hidden">
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-800 rounded-full z-10"></div>
+                        <div class="bg-black w-full h-full rounded-[2rem] flex flex-col items-center justify-center p-8 text-center text-white relative">
+                            <div class="absolute inset-0 opacity-20 overflow-hidden">
+                                <div class="w-[200%] h-[200%] bg-gradient-to-br from-blue-500 via-transparent to-purple-500 animate-pulse"></div>
+                            </div>
+                            
+                            <div class="relative z-10 w-full">
+                                <div class="w-full aspect-square border-2 border-blue-500/50 rounded-3xl flex items-center justify-center mb-8 relative">
+                                    <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 -mt-1 -ml-1 rounded-tl-lg"></div>
+                                    <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 -mt-1 -mr-1 rounded-tr-lg"></div>
+                                    <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 -mb-1 -ml-1 rounded-bl-lg"></div>
+                                    <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 -mb-1 -mr-1 rounded-br-lg"></div>
+                                    <i data-lucide="qr-code" class="w-32 h-32 text-white/10"></i>
+                                    
+                                    <div class="scan-line absolute inset-x-4 h-1 bg-blue-500 shadow-[0_0_15px_blue]"></div>
+                                </div>
+                                
+                                <h4 class="text-xl font-bold mb-2">Scan QR Code</h4>
+                                <p class="text-slate-400 text-sm mb-8">Point your camera at the instructor's screen to record attendance.</p>
+                                
+                                <button onclick="triggerToast('Success! Attendance marked for Alice Johnson.'); setView('admin_dashboard');" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-lg active:scale-95 transition-transform shadow-lg shadow-blue-600/20">
+                                    Mark Presence
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function renderStatCard(label, value, trend, icon, iconColor, bgColor) {
+            return `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 ${bgColor} rounded-lg">
+                            <i data-lucide="${icon}" class="${iconColor} w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded-md ${trend.includes('+') ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}">
+                            ${trend}
+                        </span>
+                    </div>
+                    <p class="text-slate-500 text-sm font-medium">${label}</p>
+                    <p class="text-2xl font-bold text-slate-800">${value}</p>
+                </div>
+            `;
+        }
+
+        // Initialize view on load
+        window.onload = () => {
+            setView('admin_dashboard');
+        };
+    </script>
+</body>
+</html>
