@@ -24,7 +24,7 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         
-        .qr-gradient { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); }
+        .modal-overlay { background: rgba(11, 15, 26, 0.6); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
@@ -68,7 +68,7 @@
         <main class="ml-[280px] flex-1 p-10">
             <header class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 id="view-title" class="text-3xl font-black tracking-tight text-slate-900">Dashboard</h2>
+                    <h2 id="view-title" class="text-3xl font-black tracking-tight text-slate-900">Overview</h2>
                     <p id="view-desc" class="text-slate-400 font-medium text-sm mt-1">Academic tracking system.</p>
                 </div>
                 
@@ -84,6 +84,36 @@
 
             <div id="view-mount" class="fade-in"></div>
         </main>
+    </div>
+
+    <!-- Course Edit Modal -->
+    <div id="course-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl p-10 fade-in">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black">Edit Course</h3>
+                <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+            </div>
+            <form id="course-edit-form" class="space-y-6">
+                <input type="hidden" id="edit-course-id">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Course Code</label>
+                    <input type="text" id="edit-course-code" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Course Name</label>
+                    <input type="text" id="edit-course-name" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Total Planned Sessions</label>
+                    <input type="number" id="edit-course-sessions" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required min="1" max="100">
+                </div>
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeCourseModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-500/20">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Toast UI -->
@@ -114,28 +144,63 @@
 
         let currentCohortFilter = "ALL";
         let activeView = 'overview';
-        let charts = {};
         let selectedPortalCourse = courses[0].id;
         let selectedPortalSession = 1;
 
-        // --- UTILS ---
-        function getActiveCohorts() {
-            const active = new Set(students.map(s => s.cohort));
-            return Array.from(active);
-        }
+        // --- EXPOSED FUNCTIONS ---
+        window.downloadCSVTemplate = function() {
+            const csvContent = "data:text/csv;charset=utf-8,Matric,FirstName,LastName,Email,Cohort\n24/MMBA/000,Sample,User,sample@example.com,MMBA 10";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "attendx_template.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Template downloaded successfully");
+        };
 
-        function getAttendanceStats(student) {
-            const attended = student.sessions.filter(v => v === 1).length;
-            const total = 22;
-            const percent = (attended / total) * 100;
-            let status = "Good Standing";
-            let color = "status-green";
-            if (percent < 60) { status = "Need for make-up attendance"; color = "status-amber"; }
-            else if (percent < 75) { status = "Downgrade"; color = "status-red"; }
-            return { attended, missed: total - attended, percent: percent.toFixed(1), status, color };
-        }
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showToast(`File "${file.name}" uploaded for processing`);
+            }
+        };
 
-        function switchView(view) {
+        window.openCourseEdit = function(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+            
+            document.getElementById('edit-course-id').value = course.id;
+            document.getElementById('edit-course-code').value = course.code;
+            document.getElementById('edit-course-name').value = course.name;
+            document.getElementById('edit-course-sessions').value = course.totalSessions;
+            
+            document.getElementById('course-modal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.closeCourseModal = function() {
+            document.getElementById('course-modal').classList.add('hidden');
+        };
+
+        document.getElementById('course-edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-course-id').value;
+            const code = document.getElementById('edit-course-code').value;
+            const name = document.getElementById('edit-course-name').value;
+            const sessionsCount = parseInt(document.getElementById('edit-course-sessions').value);
+            
+            const index = courses.findIndex(c => c.id === id);
+            if (index !== -1) {
+                courses[index] = { ...courses[index], code, name, totalSessions: sessionsCount };
+                showToast("Course updated successfully");
+                closeCourseModal();
+                switchView('courses');
+            }
+        });
+
+        window.switchView = function(view) {
             activeView = view;
             const mount = document.getElementById('view-mount');
             const title = document.getElementById('view-title');
@@ -149,49 +214,87 @@
             
             if (view === 'overview') {
                 title.innerText = "System Overview";
-                desc.innerText = "Holistic view of all active cohorts and engagement rates.";
+                desc.innerText = "General health and aggregated statistics.";
                 renderOverview(mount);
             } else if (view === 'dashboard') {
                 title.innerText = "Compliance Dashboard";
-                desc.innerText = "Detailed attendance analytics and regulatory compliance.";
+                desc.innerText = "Detailed analytics and attendance tracking.";
                 renderCompliance(mount);
             } else if (view === 'registry') {
                 title.innerText = "Student Registry";
-                desc.innerText = "Manage student enrollment and bulk database operations.";
+                desc.innerText = "Manage student enrollment and bulk imports.";
                 renderRegistry(mount);
             } else if (view === 'courses') {
-                title.innerText = "Manage Courses";
-                desc.innerText = "Define course structures and session requirements.";
+                title.innerText = "Course Management";
+                desc.innerText = "View and manage academic curriculum.";
                 renderCourses(mount);
             } else if (view === 'matrix') {
                 title.innerText = "Session Matrix";
-                desc.innerText = "Session-by-session attendance tracking grid.";
+                desc.innerText = "Raw session-by-session attendance grid.";
                 renderMatrix(mount);
             } else if (view === 'activate') {
-                title.innerText = "QR Portal";
-                desc.innerText = "Generate live access tokens for physical presence.";
+                title.innerText = "Generate QR";
+                desc.innerText = "Activate tokens for live classroom sessions.";
                 renderActivate(mount);
             }
             lucide.createIcons();
-        }
+        };
 
-        function updateGlobalCohort(val) {
+        window.updateGlobalCohort = function(val) {
             currentCohortFilter = val;
             switchView(activeView);
+        };
+
+        window.refreshPortalQR = function() {
+            const course = courses.find(c => c.id === selectedPortalCourse);
+            if(document.getElementById('portal-course-tag')) document.getElementById('portal-course-tag').innerText = course.code;
+            if(document.getElementById('portal-session-tag')) document.getElementById('portal-session-tag').innerText = `SESSION ${selectedPortalSession}`;
+            
+            document.querySelectorAll('.portal-session-btn').forEach(btn => {
+                if(parseInt(btn.innerText) === selectedPortalSession) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('bg-slate-50', 'text-slate-400');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-slate-50', 'text-slate-400');
+                }
+            });
+            showToast(`Session ${selectedPortalSession} activated`);
+        };
+
+        window.setPortalSession = function(num) {
+            selectedPortalSession = num;
+            refreshPortalQR();
+        };
+
+        // --- INTERNAL LOGIC ---
+        function getActiveCohorts() {
+            const active = new Set(students.map(s => s.cohort));
+            return Array.from(active);
         }
 
-        // --- VIEWS ---
+        function getAttendanceStats(student) {
+            const attended = student.sessions.filter(v => v === 1).length;
+            const total = 22;
+            const percent = (attended / total) * 100;
+            let status = "Good Standing";
+            let color = "status-green";
+            if (percent < 60) { status = "Make-up Required"; color = "status-amber"; }
+            else if (percent < 75) { status = "Risk Warning"; color = "status-red"; }
+            return { attended, missed: total - attended, percent: percent.toFixed(1), status, color };
+        }
 
+        // --- RENDERERS ---
         function renderOverview(el) {
             const activeCohorts = getActiveCohorts();
             el.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                     <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Aggregated System Health</h4>
+                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Aggregated Attendance</h4>
                         <div class="h-64"><canvas id="chart-main-agg"></canvas></div>
                     </div>
                     <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 overflow-y-auto max-h-[350px] custom-scrollbar">
-                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Active Cohorts Monitoring</h4>
+                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Active Cohorts</h4>
                          <div class="space-y-4">
                             ${activeCohorts.map(c => {
                                 const count = students.filter(s => s.cohort === c).length;
@@ -199,22 +302,14 @@
                                     <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                                         <div>
                                             <div class="font-black text-sm">${c}</div>
-                                            <div class="text-[10px] text-slate-400">${count} Students Uploaded</div>
+                                            <div class="text-[10px] text-slate-400">${count} Students Enrolled</div>
                                         </div>
-                                        <button onclick="updateGlobalCohort('${c}'); switchView('dashboard');" class="text-blue-600 font-bold text-xs hover:underline">View Live Chart</button>
+                                        <button onclick="updateGlobalCohort('${c}'); switchView('dashboard');" class="text-blue-600 font-bold text-xs hover:underline">View Details</button>
                                     </div>
                                 `;
                             }).join('')}
                          </div>
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    ${activeCohorts.map(c => `
-                        <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
-                            <h4 class="text-sm font-black mb-4">${c} Distribution</h4>
-                            <div class="h-40"><canvas id="chart-mini-${c.replace(/\s/g, '')}"></canvas></div>
-                        </div>
-                    `).join('')}
                 </div>
             `;
 
@@ -234,20 +329,6 @@
                 },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
             });
-
-            activeCohorts.forEach(c => {
-                const cohortStudents = students.filter(s => s.cohort === c);
-                const good = cohortStudents.filter(s => parseFloat(getAttendanceStats(s).percent) >= 75).length;
-                const risk = cohortStudents.filter(s => parseFloat(getAttendanceStats(s).percent) < 75).length;
-                new Chart(document.getElementById(`chart-mini-${c.replace(/\s/g, '')}`), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Good', 'At Risk'],
-                        datasets: [{ data: [good, risk], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
-                    },
-                    options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
-                });
-            });
         }
 
         function renderCompliance(el) {
@@ -255,24 +336,13 @@
             el.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                     <div class="md:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <div class="flex justify-between items-center mb-6">
-                             <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Attendance Spread: ${currentCohortFilter}</h4>
-                             <div class="text-[10px] font-bold text-slate-400">${list.length} Records Analyzed</div>
-                        </div>
+                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Compliance Trend: ${currentCohortFilter}</h4>
                         <div class="h-64"><canvas id="chart-compliance-detail"></canvas></div>
                     </div>
-                    <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl shadow-blue-200 text-white">
-                        <h4 class="text-xs font-black text-blue-200 uppercase tracking-widest mb-6">Key Insights</h4>
-                        <div class="space-y-6">
-                            <div>
-                                <div class="text-2xl font-black">${list.length ? (list.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / list.length).toFixed(1) : 0}%</div>
-                                <div class="text-[10px] font-bold text-blue-200 uppercase">Average Attendance</div>
-                            </div>
-                            <div class="pt-6 border-t border-blue-500">
-                                <div class="text-2xl font-black text-red-300">${list.filter(s => parseFloat(getAttendanceStats(s).percent) < 75).length}</div>
-                                <div class="text-[10px] font-bold text-blue-200 uppercase">Critical Action Required</div>
-                            </div>
-                        </div>
+                    <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl shadow-blue-200 text-white flex flex-col justify-center">
+                        <h4 class="text-xs font-black text-blue-200 uppercase tracking-widest mb-4">Cohort Average</h4>
+                        <div class="text-4xl font-black">${list.length ? (list.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / list.length).toFixed(1) : 0}%</div>
+                        <div class="text-[10px] font-bold text-blue-200 uppercase mt-2">Overall Compliance</div>
                     </div>
                 </div>
                 <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
@@ -287,7 +357,7 @@
                                     <tr>
                                         <td class="px-8 py-6">
                                             <div class="font-bold text-sm">${s.fname} ${s.lname}</div>
-                                            <div class="text-[10px] text-slate-400 font-mono">${s.matric} • ${s.cohort}</div>
+                                            <div class="text-[10px] text-slate-400 font-mono">${s.matric}</div>
                                         </td>
                                         <td class="px-8 py-6 text-center font-bold text-slate-600">${stats.missed}</td>
                                         <td class="px-8 py-6">
@@ -317,9 +387,7 @@
                         borderColor: '#2563eb',
                         backgroundColor: 'rgba(37, 99, 235, 0.1)',
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 6,
-                        pointBackgroundColor: '#2563eb'
+                        tension: 0.4
                     }]
                 },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
@@ -331,22 +399,17 @@
             el.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
                     <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 flex items-center justify-between gap-8">
-                        <div><h3 class="font-black text-lg mb-1">Bulk Enrollment</h3><p class="text-slate-400 text-xs font-medium">Download the CSV template and upload to register an entire cohort at once.</p></div>
+                        <div><h3 class="font-black text-lg mb-1">Bulk Enrollment</h3><p class="text-slate-400 text-xs font-medium">Download CSV template or upload student lists.</p></div>
                         <div class="flex items-center gap-3 shrink-0">
                             <button onclick="downloadCSVTemplate()" class="bg-slate-50 hover:bg-slate-100 text-slate-600 px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 border border-slate-200 transition-all"><i data-lucide="download-cloud" class="w-4 h-4 text-blue-600"></i> TEMPLATE</button>
                             <label class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer transition-all shadow-lg shadow-blue-500/20"><i data-lucide="upload-cloud" class="w-4 h-4"></i> UPLOAD CSV<input type="file" accept=".csv" class="hidden" onchange="handleFileUpload(event)"></label>
                         </div>
                     </div>
-                    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white flex flex-col justify-center">
-                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Population</div>
-                        <div class="text-3xl font-black">${list.length}</div>
-                        <div class="text-xs text-slate-400 mt-1">Students enrolled in ${currentCohortFilter}</div>
-                    </div>
                 </div>
                 <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <tr><th class="px-8 py-5">Details</th><th class="px-8 py-5">Contact</th><th class="px-8 py-5">Cohort</th><th class="px-8 py-5 text-right">Action</th></tr>
+                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5">Email</th><th class="px-8 py-5">Cohort</th></tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
                             ${list.map(s => `
@@ -354,7 +417,6 @@
                                     <td class="px-8 py-6"><div class="font-bold text-sm">${s.fname} ${s.lname}</div><div class="text-[10px] text-slate-400 font-mono">${s.matric}</div></td>
                                     <td class="px-8 py-6 text-xs text-slate-600 font-medium">${s.email}</td>
                                     <td class="px-8 py-6"><span class="bg-slate-100 text-[10px] font-black px-2 py-1 rounded text-slate-500 uppercase">${s.cohort}</span></td>
-                                    <td class="px-8 py-6 text-right"><button class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -367,14 +429,24 @@
             el.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${courses.map(c => `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 card-shadow">
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 card-shadow group relative">
+                            <button onclick="openCourseEdit('${c.id}')" class="absolute top-6 right-6 p-2 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 shadow-sm border border-slate-100">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
                             <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4"><i data-lucide="book" class="w-6 h-6"></i></div>
                             <h4 class="text-[10px] font-black text-slate-400 uppercase mb-1">${c.code}</h4>
                             <h3 class="text-lg font-black mb-6">${c.name}</h3>
-                            <div class="pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-blue-600"><span>22 SESSIONS</span><span>EDITABLE</span></div>
+                            <div class="pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                                <span>${c.totalSessions} SESSIONS PLANNED</span>
+                            </div>
                         </div>
                     `).join('')}
-                    <div class="border-2 border-dashed border-slate-200 p-8 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 cursor-pointer transition-all"><i data-lucide="plus-circle" class="w-10 h-10 mb-2"></i><span class="font-black text-xs uppercase">Add New Course</span></div>
+                    <button onclick="showToast('Course creation coming soon')" class="bg-[#f1f5f9] border-2 border-dashed border-slate-200 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all hover:bg-white group">
+                        <div class="w-12 h-12 rounded-full border-2 border-slate-200 border-dashed flex items-center justify-center mb-4 group-hover:border-blue-200 transition-all">
+                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        </div>
+                        <span class="font-black text-[10px] uppercase tracking-widest">Add New Course</span>
+                    </button>
                 </div>
             `;
         }
@@ -385,13 +457,13 @@
                 <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 p-8 overflow-x-auto">
                     <div class="min-w-[1200px]">
                         <div class="flex items-center gap-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-4 mb-4">
-                            <div class="w-56">Student Identity</div>
+                            <div class="w-56">Student Name</div>
                             <div class="flex-1 flex gap-1">${Array.from({length:22}, (_,i)=>`<div class="w-8 text-center font-bold">${i+1}</div>`).join('')}</div>
                         </div>
                         ${list.map(s => `
                             <div class="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all rounded-xl">
-                                <div class="w-56"><div class="font-black text-xs truncate">${s.fname} ${s.lname}</div><div class="text-[9px] text-blue-500 font-bold">${s.matric}</div></div>
-                                <div class="flex-1 flex gap-1">${s.sessions.map((v, i) => `<div class="w-8 h-8 rounded-lg flex items-center justify-center ${v === 1 ? 'bg-green-500 text-white shadow-sm shadow-green-200' : 'bg-slate-100'}"><i data-lucide="check" class="w-3 h-3 ${v === 0 ? 'opacity-0' : ''}"></i></div>`).join('')}</div>
+                                <div class="w-56"><div class="font-black text-xs truncate">${s.fname} ${s.lname}</div></div>
+                                <div class="flex-1 flex gap-1">${s.sessions.map((v) => `<div class="w-8 h-8 rounded-lg flex items-center justify-center ${v === 1 ? 'bg-green-500 text-white' : 'bg-slate-100'}">${v === 1 ? '✓' : ''}</div>`).join('')}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -402,76 +474,32 @@
         function renderActivate(el) {
             el.innerHTML = `
                 <div class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <!-- Config Side -->
                     <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100">
                         <h3 class="text-xl font-black mb-6">Session Activation</h3>
-                        
                         <div class="space-y-6">
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Course</label>
-                                <select id="portal-course-select" onchange="selectedPortalCourse = this.value; refreshPortalQR();" class="w-full mt-2 bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
+                                <select id="portal-course-select" onchange="selectedPortalCourse = this.value; refreshPortalQR();" class="w-full mt-2 bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none">
                                     ${courses.map(c => `<option value="${c.id}" ${c.id === selectedPortalCourse ? 'selected' : ''}>${c.code} - ${c.name}</option>`).join('')}
                                 </select>
                             </div>
-
                             <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Number</label>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Number (1-22)</label>
                                 <div class="grid grid-cols-6 gap-2 mt-2">
                                     ${Array.from({length: 22}, (_, i) => i + 1).map(num => `
-                                        <button 
-                                            onclick="selectedPortalSession = ${num}; refreshPortalQR();" 
-                                            class="portal-session-btn h-10 rounded-xl font-bold text-xs transition-all ${num === selectedPortalSession ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}"
-                                        >${num}</button>
+                                        <button onclick="setPortalSession(${num})" class="portal-session-btn h-10 rounded-xl font-bold text-xs transition-all ${num === selectedPortalSession ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'}">${num}</button>
                                     `).join('')}
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Cohort</label>
-                                <div class="bg-blue-50 text-blue-700 p-4 rounded-2xl font-bold text-sm mt-2 flex items-center gap-3">
-                                    <i data-lucide="users" class="w-4 h-4"></i>
-                                    ${currentCohortFilter === 'ALL' ? 'Open to All Cohorts' : currentCohortFilter}
-                                </div>
-                            </div>
-
-                            <div class="pt-6 border-t border-slate-50">
-                                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">
-                                    This QR code is unique to <strong>Session ${selectedPortalSession}</strong>. Attendance scanned will be locked to this timestamp and cannot be reused for other sessions.
-                                </p>
-                            </div>
                         </div>
                     </div>
-
-                    <!-- Token Side -->
-                    <div class="bg-slate-900 rounded-[3rem] p-10 text-white text-center shadow-2xl relative overflow-hidden flex flex-col items-center">
-                        <div class="relative z-10 w-full">
-                            <div class="inline-flex items-center gap-2 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase mb-8">
-                                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
-                                TOKEN ACTIVE
-                            </div>
-                            
-                            <div class="bg-white p-6 rounded-[2.5rem] mb-10 inline-block relative shadow-2xl shadow-blue-500/20">
-                                <div id="portal-qr-container">
-                                    <!-- Dynamic QR Content -->
-                                </div>
-                            </div>
-
-                            <div class="mb-8">
-                                <div id="portal-course-tag" class="text-lg font-black text-white">
-                                    ${courses.find(c => c.id === selectedPortalCourse).code}
-                                </div>
-                                <div id="portal-session-tag" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mt-1">
-                                    SESSION ${selectedPortalSession}
-                                </div>
-                            </div>
-
-                            <button onclick="refreshPortalQR()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all shadow-xl shadow-blue-900/40 flex items-center justify-center gap-2">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> REFRESH TOKEN
-                            </button>
+                    <div class="bg-slate-900 rounded-[3rem] p-10 text-white text-center shadow-2xl flex flex-col items-center">
+                        <div id="portal-qr-container" class="bg-white p-6 rounded-[2.5rem] mb-6"></div>
+                        <div class="mb-8">
+                            <div id="portal-course-tag" class="text-lg font-black">${courses.find(c => c.id === selectedPortalCourse).code}</div>
+                            <div id="portal-session-tag" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">SESSION ${selectedPortalSession}</div>
                         </div>
-                        
-                        <!-- Decoration -->
-                        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
+                        <button onclick="refreshPortalQR()" class="w-full bg-blue-600 p-4 rounded-2xl font-black text-sm">REFRESH TOKEN</button>
                     </div>
                 </div>
             `;
@@ -481,53 +509,17 @@
         function generateQRVisual() {
             const container = document.getElementById('portal-qr-container');
             if(!container) return;
-            
-            // Simulating a QR code pattern that changes slightly per session/refresh
-            container.innerHTML = `
-                <svg width="180" height="180" viewBox="0 0 100 100" class="text-slate-900">
-                    <rect x="5" y="5" width="25" height="25" fill="currentColor"/>
-                    <rect x="70" y="5" width="25" height="25" fill="currentColor"/>
-                    <rect x="5" y="70" width="25" height="25" fill="currentColor"/>
-                    <!-- Randomized noise for the unique token signature -->
-                    ${Array.from({length:40}, () => `
-                        <rect x="${Math.floor(Math.random()*80)+10}" y="${Math.floor(Math.random()*80)+10}" width="4" height="4" fill="currentColor" opacity="${Math.random() > 0.3 ? 1 : 0}"/>
-                    `).join('')}
-                    <!-- Session Identity Indicator (center dot) -->
-                    <rect x="45" y="45" width="10" height="10" fill="#2563eb" />
-                </svg>
-            `;
-        }
-
-        function refreshPortalQR() {
-            const course = courses.find(c => c.id === selectedPortalCourse);
-            const courseTag = document.getElementById('portal-course-tag');
-            const sessionTag = document.getElementById('portal-session-tag');
-            
-            // Update Text Tags
-            if(courseTag) courseTag.innerText = course.code;
-            if(sessionTag) sessionTag.innerText = `SESSION ${selectedPortalSession}`;
-            
-            // Update Button Styles
-            document.querySelectorAll('.portal-session-btn').forEach(btn => {
-                if(parseInt(btn.innerText) === selectedPortalSession) {
-                    btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
-                    btn.classList.remove('bg-slate-50', 'text-slate-400');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
-                    btn.classList.add('bg-slate-50', 'text-slate-400');
-                }
-            });
-
-            generateQRVisual();
-            showToast(`Session ${selectedPortalSession} Active for ${course.code}`);
-            lucide.createIcons();
+            container.innerHTML = `<svg width="150" height="150" viewBox="0 0 100 100"><rect width="100" height="100" fill="white"/><rect x="10" y="10" width="20" height="20"/><rect x="70" y="10" width="20" height="20"/><rect x="10" y="70" width="20" height="20"/><rect x="40" y="40" width="20" height="20" fill="#2563eb"/></svg>`;
         }
 
         function showToast(m) {
             const t = document.getElementById('toast');
-            document.getElementById('toast-text').innerText = m;
-            t.classList.remove('translate-y-32');
-            setTimeout(() => t.classList.add('translate-y-32'), 3000);
+            const txt = document.getElementById('toast-text');
+            if(txt) txt.innerText = m;
+            if(t) {
+                t.classList.remove('translate-y-32');
+                setTimeout(() => t.classList.add('translate-y-32'), 3000);
+            }
         }
 
         function init() {
@@ -540,7 +532,7 @@
             switchView('overview');
         }
 
-        init();
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
