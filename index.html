@@ -3,87 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Academic Portal</title>
+    <title>AttendX | Academic Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         
-        .fade-in { animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
-        @keyframes scan {
-            0%, 100% { transform: translateY(0); opacity: 0.2; }
-            50% { transform: translateY(220px); opacity: 0.8; }
-        }
-        .scan-line {
-            animation: scan 2.5s infinite ease-in-out;
-            box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5);
-        }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .sidebar-item-active { background-color: #2563eb; color: white; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
-        .present { background-color: #10b981; }
-        .absent { background-color: #e2e8f0; }
-        
         .card-shadow { box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05); }
-        .modal-blur { background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
         .status-amber { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
         .status-red { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         .status-green { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        .qr-gradient { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
 
     <div class="flex min-h-screen">
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar -->
         <aside class="w-[280px] bg-[#0b0f1a] text-white fixed h-full flex flex-col p-8 z-40">
-            <div class="flex items-center gap-3 mb-12">
+            <div class="flex items-center gap-3 mb-10">
                 <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
                 <h1 class="font-black text-2xl tracking-tighter text-white">ATTENDX</h1>
             </div>
             
-            <nav class="space-y-2 flex-1">
-                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-slate-800/40 text-slate-400 font-bold text-sm">
-                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+            <nav class="space-y-1.5 flex-1">
+                <button onclick="switchView('overview')" id="nav-overview" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Overview
                 </button>
-                <button onclick="switchView('registry')" id="nav-registry" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-slate-800/40 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Compliance DB
+                </button>
+                <button onclick="switchView('registry')" id="nav-registry" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
                     <i data-lucide="users" class="w-5 h-5"></i> Student Registry
                 </button>
-                <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-slate-800/40 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
                     <i data-lucide="book-open" class="w-5 h-5"></i> Manage Courses
                 </button>
-                <button onclick="switchView('matrix')" id="nav-matrix" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-slate-800/40 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('matrix')" id="nav-matrix" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
                     <i data-lucide="grid-3x3" class="w-5 h-5"></i> Session Matrix
                 </button>
             </nav>
 
             <div class="mt-auto">
-                <button onclick="switchView('activate')" id="nav-activate" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-[1.5rem] font-black text-sm tracking-wide shadow-xl shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
+                <button onclick="switchView('activate')" id="nav-activate" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black text-sm tracking-wide shadow-xl shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-95 transition-all">
                     <i data-lucide="qr-code" class="w-5 h-5"></i> GENERATE QR
                 </button>
             </div>
         </aside>
 
         <!-- Main Workspace -->
-        <main class="ml-[280px] flex-1 p-12">
-            <header class="flex justify-between items-center mb-10">
+        <main class="ml-[280px] flex-1 p-10">
+            <header class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 id="view-title" class="text-3xl font-black tracking-tight text-slate-900 underline decoration-blue-500 decoration-4 underline-offset-8">Dashboard</h2>
-                    <p id="view-desc" class="text-slate-400 font-medium text-sm mt-3">Monitoring academic compliance.</p>
+                    <h2 id="view-title" class="text-3xl font-black tracking-tight text-slate-900">Dashboard</h2>
+                    <p id="view-desc" class="text-slate-400 font-medium text-sm mt-1">Academic tracking system.</p>
                 </div>
                 
-                <div class="flex items-center gap-6">
-                    <div class="text-right">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Global Filter</p>
-                        <select id="global-cohort-filter" onchange="updateGlobalCohort(this.value)" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold shadow-sm outline-none focus:ring-2 ring-blue-500/20 cursor-pointer">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-2 px-4 shadow-sm flex items-center gap-3">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Cohort:</span>
+                        <select id="global-cohort-filter" onchange="updateGlobalCohort(this.value)" class="bg-transparent text-sm font-bold outline-none cursor-pointer text-blue-600">
                             <option value="ALL">All Cohorts</option>
                         </select>
                     </div>
@@ -94,435 +86,460 @@
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-container" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6">
-        <div class="absolute inset-0 modal-blur" onclick="closeModal()"></div>
-        <div id="modal-content" class="relative w-full max-w-xl bg-white p-10 rounded-[3rem] shadow-2xl overflow-y-auto max-h-[90vh]">
-            <!-- Dynamic Modal Content -->
-        </div>
-    </div>
-
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-10 right-10 bg-[#0b0f1a] text-white px-8 py-5 rounded-[1.5rem] shadow-2xl flex items-center gap-4 transform translate-y-32 transition-transform duration-500 z-50 border border-white/5">
-        <div class="bg-blue-500/20 text-blue-400 p-2 rounded-xl"><i data-lucide="info" class="w-4 h-4"></i></div>
+    <!-- Toast UI -->
+    <div id="toast" class="fixed bottom-10 right-10 bg-[#0b0f1a] text-white px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4 transform translate-y-32 transition-transform duration-500 z-50 border border-white/5">
         <span id="toast-text" class="text-sm font-bold">Action Successful</span>
     </div>
 
     <script>
-        // --- DATA & STATE ---
-        const COHORTS = [
-            "MMBA 6", "MMBA 7", "MMBA 8", "MMBA 9", "MMBA 10", "MMBA 11", "MMBA 12", "MMBA 13", "MMBA 14",
+        // --- DATA STATE ---
+        const ALL_COHORTS = [
+            "MMBA 6", "MMBA 7", "MMBA 8", "MMBA 9", "MMBA 10", "MMBA 11", "MMBA 12",
             "EMBA 30", "EMBA 31", "EMBA 32", "EMBA 33", "EMBA 34",
-            "MEMBA 13", "MEMBA 14", "MEMBA 15", "MEMBA 16", "MEMBA 17", "MEMBA 18"
+            "MEMBA 13", "MEMBA 14", "MEMBA 15", "MEMBA 16"
         ];
-
-        let currentCohortFilter = "ALL";
-        let activeView = 'dashboard';
 
         let courses = [
             { id: 'c1', code: 'BUS701', name: 'Strategic Management', totalSessions: 22 },
             { id: 'c2', code: 'FIN702', name: 'Corporate Finance', totalSessions: 22 },
-            { id: 'c3', code: 'MKT703', name: 'Marketing Analytics', totalSessions: 22 }
+            { id: 'c3', code: 'ECN705', name: 'Managerial Economics', totalSessions: 22 }
         ];
 
         let students = [
             { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah@uni.edu', cohort: 'MMBA 10', courseId: 'c1', sessions: [1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
             { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'john@uni.edu', cohort: 'EMBA 30', courseId: 'c1', sessions: [1,0,1,0,1,0,0,0,1,0,1,0,1,1,1,0,1,0,1,0,0,1] },
-            { id: 's3', matric: '24/MEM/045', fname: 'Grace', lname: 'Eze', email: 'grace@uni.edu', cohort: 'MEMBA 13', courseId: 'c2', sessions: [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0] }
+            { id: 's3', matric: '24/MEM/045', fname: 'Grace', lname: 'Eze', email: 'grace@uni.edu', cohort: 'MEMBA 13', courseId: 'c2', sessions: [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+            { id: 's4', matric: '24/MMBA/004', fname: 'Michael', lname: 'Okoro', email: 'mike@uni.edu', cohort: 'MMBA 10', courseId: 'c1', sessions: [1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,1,1,0,0] }
         ];
 
-        // --- CORE FUNCTIONS ---
+        let currentCohortFilter = "ALL";
+        let activeView = 'overview';
+        let charts = {};
+        let selectedPortalCourse = courses[0].id;
+        let selectedPortalSession = 1;
+
+        // --- UTILS ---
+        function getActiveCohorts() {
+            const active = new Set(students.map(s => s.cohort));
+            return Array.from(active);
+        }
+
+        function getAttendanceStats(student) {
+            const attended = student.sessions.filter(v => v === 1).length;
+            const total = 22;
+            const percent = (attended / total) * 100;
+            let status = "Good Standing";
+            let color = "status-green";
+            if (percent < 60) { status = "Need for make-up attendance"; color = "status-amber"; }
+            else if (percent < 75) { status = "Downgrade"; color = "status-red"; }
+            return { attended, missed: total - attended, percent: percent.toFixed(1), status, color };
+        }
+
         function switchView(view) {
             activeView = view;
             const mount = document.getElementById('view-mount');
             const title = document.getElementById('view-title');
             const desc = document.getElementById('view-desc');
-
+            
             document.querySelectorAll('aside nav button, aside .mt-auto button').forEach(b => b.classList.remove('sidebar-item-active'));
             const activeBtn = document.getElementById(`nav-${view}`);
             if (activeBtn) activeBtn.classList.add('sidebar-item-active');
 
-            if (view === 'dashboard') {
-                title.innerText = "Compliance Dashboard"; desc.innerText = "Real-time attendance analytics and risk assessment.";
-                renderDashboard(mount);
+            mount.innerHTML = "";
+            
+            if (view === 'overview') {
+                title.innerText = "System Overview";
+                desc.innerText = "Holistic view of all active cohorts and engagement rates.";
+                renderOverview(mount);
+            } else if (view === 'dashboard') {
+                title.innerText = "Compliance Dashboard";
+                desc.innerText = "Detailed attendance analytics and regulatory compliance.";
+                renderCompliance(mount);
             } else if (view === 'registry') {
-                title.innerText = "Student Registry"; desc.innerText = "Manage student records and performance tracks.";
+                title.innerText = "Student Registry";
+                desc.innerText = "Manage student enrollment and bulk database operations.";
                 renderRegistry(mount);
             } else if (view === 'courses') {
-                title.innerText = "Course Management"; desc.innerText = "Define module structures and session caps.";
+                title.innerText = "Manage Courses";
+                desc.innerText = "Define course structures and session requirements.";
                 renderCourses(mount);
             } else if (view === 'matrix') {
-                title.innerText = "Session Matrix"; desc.innerText = "Granular view of all 22 sessions per student.";
+                title.innerText = "Session Matrix";
+                desc.innerText = "Session-by-session attendance tracking grid.";
                 renderMatrix(mount);
             } else if (view === 'activate') {
-                title.innerText = "Generate QR Portal"; desc.innerText = "Generate a session token for student check-in.";
+                title.innerText = "QR Portal";
+                desc.innerText = "Generate live access tokens for physical presence.";
                 renderActivate(mount);
             }
             lucide.createIcons();
         }
 
-        function updateGlobalCohort(val) { currentCohortFilter = val; switchView(activeView); }
+        function updateGlobalCohort(val) {
+            currentCohortFilter = val;
+            switchView(activeView);
+        }
+
+        // --- VIEWS ---
+
+        function renderOverview(el) {
+            const activeCohorts = getActiveCohorts();
+            el.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
+                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Aggregated System Health</h4>
+                        <div class="h-64"><canvas id="chart-main-agg"></canvas></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 overflow-y-auto max-h-[350px] custom-scrollbar">
+                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Active Cohorts Monitoring</h4>
+                         <div class="space-y-4">
+                            ${activeCohorts.map(c => {
+                                const count = students.filter(s => s.cohort === c).length;
+                                return `
+                                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                                        <div>
+                                            <div class="font-black text-sm">${c}</div>
+                                            <div class="text-[10px] text-slate-400">${count} Students Uploaded</div>
+                                        </div>
+                                        <button onclick="updateGlobalCohort('${c}'); switchView('dashboard');" class="text-blue-600 font-bold text-xs hover:underline">View Live Chart</button>
+                                    </div>
+                                `;
+                            }).join('')}
+                         </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${activeCohorts.map(c => `
+                        <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
+                            <h4 class="text-sm font-black mb-4">${c} Distribution</h4>
+                            <div class="h-40"><canvas id="chart-mini-${c.replace(/\s/g, '')}"></canvas></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            new Chart(document.getElementById('chart-main-agg'), {
+                type: 'bar',
+                data: {
+                    labels: activeCohorts,
+                    datasets: [{
+                        label: 'Avg Attendance %',
+                        data: activeCohorts.map(c => {
+                            const filtered = students.filter(s => s.cohort === c);
+                            return filtered.length ? (filtered.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / filtered.length) : 0;
+                        }),
+                        backgroundColor: '#2563eb',
+                        borderRadius: 12
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+
+            activeCohorts.forEach(c => {
+                const cohortStudents = students.filter(s => s.cohort === c);
+                const good = cohortStudents.filter(s => parseFloat(getAttendanceStats(s).percent) >= 75).length;
+                const risk = cohortStudents.filter(s => parseFloat(getAttendanceStats(s).percent) < 75).length;
+                new Chart(document.getElementById(`chart-mini-${c.replace(/\s/g, '')}`), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Good', 'At Risk'],
+                        datasets: [{ data: [good, risk], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+                    },
+                    options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+                });
+            });
+        }
+
+        function renderCompliance(el) {
+            const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
+            el.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                    <div class="md:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
+                        <div class="flex justify-between items-center mb-6">
+                             <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Attendance Spread: ${currentCohortFilter}</h4>
+                             <div class="text-[10px] font-bold text-slate-400">${list.length} Records Analyzed</div>
+                        </div>
+                        <div class="h-64"><canvas id="chart-compliance-detail"></canvas></div>
+                    </div>
+                    <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl shadow-blue-200 text-white">
+                        <h4 class="text-xs font-black text-blue-200 uppercase tracking-widest mb-6">Key Insights</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="text-2xl font-black">${list.length ? (list.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / list.length).toFixed(1) : 0}%</div>
+                                <div class="text-[10px] font-bold text-blue-200 uppercase">Average Attendance</div>
+                            </div>
+                            <div class="pt-6 border-t border-blue-500">
+                                <div class="text-2xl font-black text-red-300">${list.filter(s => parseFloat(getAttendanceStats(s).percent) < 75).length}</div>
+                                <div class="text-[10px] font-bold text-blue-200 uppercase">Critical Action Required</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5 text-center">Missed</th><th class="px-8 py-5 text-center">Attendance</th><th class="px-8 py-5 text-right">Remark</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            ${list.map(s => {
+                                const stats = getAttendanceStats(s);
+                                return `
+                                    <tr>
+                                        <td class="px-8 py-6">
+                                            <div class="font-bold text-sm">${s.fname} ${s.lname}</div>
+                                            <div class="text-[10px] text-slate-400 font-mono">${s.matric} • ${s.cohort}</div>
+                                        </td>
+                                        <td class="px-8 py-6 text-center font-bold text-slate-600">${stats.missed}</td>
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-3 justify-center">
+                                                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-600" style="width:${stats.percent}%"></div></div>
+                                                <span class="text-xs font-black">${stats.percent}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight ${stats.color}">${stats.status}</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            new Chart(document.getElementById('chart-compliance-detail'), {
+                type: 'line',
+                data: {
+                    labels: list.map(s => s.fname),
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: list.map(s => parseFloat(getAttendanceStats(s).percent)),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+            });
+        }
+
+        function renderRegistry(el) {
+            const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
+            el.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                    <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 flex items-center justify-between gap-8">
+                        <div><h3 class="font-black text-lg mb-1">Bulk Enrollment</h3><p class="text-slate-400 text-xs font-medium">Download the CSV template and upload to register an entire cohort at once.</p></div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <button onclick="downloadCSVTemplate()" class="bg-slate-50 hover:bg-slate-100 text-slate-600 px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 border border-slate-200 transition-all"><i data-lucide="download-cloud" class="w-4 h-4 text-blue-600"></i> TEMPLATE</button>
+                            <label class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer transition-all shadow-lg shadow-blue-500/20"><i data-lucide="upload-cloud" class="w-4 h-4"></i> UPLOAD CSV<input type="file" accept=".csv" class="hidden" onchange="handleFileUpload(event)"></label>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 p-8 rounded-[2.5rem] text-white flex flex-col justify-center">
+                        <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Population</div>
+                        <div class="text-3xl font-black">${list.length}</div>
+                        <div class="text-xs text-slate-400 mt-1">Students enrolled in ${currentCohortFilter}</div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <tr><th class="px-8 py-5">Details</th><th class="px-8 py-5">Contact</th><th class="px-8 py-5">Cohort</th><th class="px-8 py-5 text-right">Action</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            ${list.map(s => `
+                                <tr>
+                                    <td class="px-8 py-6"><div class="font-bold text-sm">${s.fname} ${s.lname}</div><div class="text-[10px] text-slate-400 font-mono">${s.matric}</div></td>
+                                    <td class="px-8 py-6 text-xs text-slate-600 font-medium">${s.email}</td>
+                                    <td class="px-8 py-6"><span class="bg-slate-100 text-[10px] font-black px-2 py-1 rounded text-slate-500 uppercase">${s.cohort}</span></td>
+                                    <td class="px-8 py-6 text-right"><button class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderCourses(el) {
+            el.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${courses.map(c => `
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 card-shadow">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4"><i data-lucide="book" class="w-6 h-6"></i></div>
+                            <h4 class="text-[10px] font-black text-slate-400 uppercase mb-1">${c.code}</h4>
+                            <h3 class="text-lg font-black mb-6">${c.name}</h3>
+                            <div class="pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-blue-600"><span>22 SESSIONS</span><span>EDITABLE</span></div>
+                        </div>
+                    `).join('')}
+                    <div class="border-2 border-dashed border-slate-200 p-8 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 cursor-pointer transition-all"><i data-lucide="plus-circle" class="w-10 h-10 mb-2"></i><span class="font-black text-xs uppercase">Add New Course</span></div>
+                </div>
+            `;
+        }
+
+        function renderMatrix(el) {
+             const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
+             el.innerHTML = `
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 p-8 overflow-x-auto">
+                    <div class="min-w-[1200px]">
+                        <div class="flex items-center gap-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-4 mb-4">
+                            <div class="w-56">Student Identity</div>
+                            <div class="flex-1 flex gap-1">${Array.from({length:22}, (_,i)=>`<div class="w-8 text-center font-bold">${i+1}</div>`).join('')}</div>
+                        </div>
+                        ${list.map(s => `
+                            <div class="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all rounded-xl">
+                                <div class="w-56"><div class="font-black text-xs truncate">${s.fname} ${s.lname}</div><div class="text-[9px] text-blue-500 font-bold">${s.matric}</div></div>
+                                <div class="flex-1 flex gap-1">${s.sessions.map((v, i) => `<div class="w-8 h-8 rounded-lg flex items-center justify-center ${v === 1 ? 'bg-green-500 text-white shadow-sm shadow-green-200' : 'bg-slate-100'}"><i data-lucide="check" class="w-3 h-3 ${v === 0 ? 'opacity-0' : ''}"></i></div>`).join('')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+             `;
+        }
+
+        function renderActivate(el) {
+            el.innerHTML = `
+                <div class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <!-- Config Side -->
+                    <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100">
+                        <h3 class="text-xl font-black mb-6">Session Activation</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Course</label>
+                                <select id="portal-course-select" onchange="selectedPortalCourse = this.value; refreshPortalQR();" class="w-full mt-2 bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20">
+                                    ${courses.map(c => `<option value="${c.id}" ${c.id === selectedPortalCourse ? 'selected' : ''}>${c.code} - ${c.name}</option>`).join('')}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Number</label>
+                                <div class="grid grid-cols-6 gap-2 mt-2">
+                                    ${Array.from({length: 22}, (_, i) => i + 1).map(num => `
+                                        <button 
+                                            onclick="selectedPortalSession = ${num}; refreshPortalQR();" 
+                                            class="portal-session-btn h-10 rounded-xl font-bold text-xs transition-all ${num === selectedPortalSession ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}"
+                                        >${num}</button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Cohort</label>
+                                <div class="bg-blue-50 text-blue-700 p-4 rounded-2xl font-bold text-sm mt-2 flex items-center gap-3">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                    ${currentCohortFilter === 'ALL' ? 'Open to All Cohorts' : currentCohortFilter}
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-slate-50">
+                                <p class="text-[10px] text-slate-400 font-medium leading-relaxed">
+                                    This QR code is unique to <strong>Session ${selectedPortalSession}</strong>. Attendance scanned will be locked to this timestamp and cannot be reused for other sessions.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token Side -->
+                    <div class="bg-slate-900 rounded-[3rem] p-10 text-white text-center shadow-2xl relative overflow-hidden flex flex-col items-center">
+                        <div class="relative z-10 w-full">
+                            <div class="inline-flex items-center gap-2 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase mb-8">
+                                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
+                                TOKEN ACTIVE
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-[2.5rem] mb-10 inline-block relative shadow-2xl shadow-blue-500/20">
+                                <div id="portal-qr-container">
+                                    <!-- Dynamic QR Content -->
+                                </div>
+                            </div>
+
+                            <div class="mb-8">
+                                <div id="portal-course-tag" class="text-lg font-black text-white">
+                                    ${courses.find(c => c.id === selectedPortalCourse).code}
+                                </div>
+                                <div id="portal-session-tag" class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mt-1">
+                                    SESSION ${selectedPortalSession}
+                                </div>
+                            </div>
+
+                            <button onclick="refreshPortalQR()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all shadow-xl shadow-blue-900/40 flex items-center justify-center gap-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> REFRESH TOKEN
+                            </button>
+                        </div>
+                        
+                        <!-- Decoration -->
+                        <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
+                    </div>
+                </div>
+            `;
+            generateQRVisual();
+        }
+
+        function generateQRVisual() {
+            const container = document.getElementById('portal-qr-container');
+            if(!container) return;
+            
+            // Simulating a QR code pattern that changes slightly per session/refresh
+            container.innerHTML = `
+                <svg width="180" height="180" viewBox="0 0 100 100" class="text-slate-900">
+                    <rect x="5" y="5" width="25" height="25" fill="currentColor"/>
+                    <rect x="70" y="5" width="25" height="25" fill="currentColor"/>
+                    <rect x="5" y="70" width="25" height="25" fill="currentColor"/>
+                    <!-- Randomized noise for the unique token signature -->
+                    ${Array.from({length:40}, () => `
+                        <rect x="${Math.floor(Math.random()*80)+10}" y="${Math.floor(Math.random()*80)+10}" width="4" height="4" fill="currentColor" opacity="${Math.random() > 0.3 ? 1 : 0}"/>
+                    `).join('')}
+                    <!-- Session Identity Indicator (center dot) -->
+                    <rect x="45" y="45" width="10" height="10" fill="#2563eb" />
+                </svg>
+            `;
+        }
+
+        function refreshPortalQR() {
+            const course = courses.find(c => c.id === selectedPortalCourse);
+            const courseTag = document.getElementById('portal-course-tag');
+            const sessionTag = document.getElementById('portal-session-tag');
+            
+            // Update Text Tags
+            if(courseTag) courseTag.innerText = course.code;
+            if(sessionTag) sessionTag.innerText = `SESSION ${selectedPortalSession}`;
+            
+            // Update Button Styles
+            document.querySelectorAll('.portal-session-btn').forEach(btn => {
+                if(parseInt(btn.innerText) === selectedPortalSession) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
+                    btn.classList.remove('bg-slate-50', 'text-slate-400');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
+                    btn.classList.add('bg-slate-50', 'text-slate-400');
+                }
+            });
+
+            generateQRVisual();
+            showToast(`Session ${selectedPortalSession} Active for ${course.code}`);
+            lucide.createIcons();
+        }
+
         function showToast(m) {
             const t = document.getElementById('toast');
             document.getElementById('toast-text').innerText = m;
             t.classList.remove('translate-y-32');
             setTimeout(() => t.classList.add('translate-y-32'), 3000);
         }
-        function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
-        function openModal(content) {
-            document.getElementById('modal-content').innerHTML = content;
-            document.getElementById('modal-container').classList.remove('hidden');
-            lucide.createIcons();
-        }
 
-        function getFilteredStudents() {
-            if (currentCohortFilter === "ALL") return students;
-            return students.filter(s => s.cohort === currentCohortFilter);
-        }
-
-        // --- RENDERING VIEWS ---
-
-        function renderDashboard(el) {
-            const list = getFilteredStudents();
-            const getAttendanceData = (s) => {
-                const attended = s.sessions.filter(v => v === 1).length;
-                const total = s.sessions.length;
-                const percent = (attended / total) * 100;
-                const missed = total - attended;
-                let remark = "Good Standing";
-                let style = "status-green";
-                
-                if (percent < 60) {
-                    remark = "Need for make-up attendance";
-                    style = "status-amber";
-                } else if (percent < 75) {
-                    remark = "Downgrade Risk";
-                    style = "status-red";
-                }
-                return { percent: percent.toFixed(1), missed, remark, style };
-            };
-
-            const avgAttendance = list.length ? (list.reduce((acc, s) => acc + parseFloat(getAttendanceData(s).percent), 0) / list.length).toFixed(1) : 0;
-
-            el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg. Attendance</p>
-                        <h4 class="text-3xl font-black text-blue-600">${avgAttendance}%</h4>
-                    </div>
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Students At Risk</p>
-                        <h4 class="text-3xl font-black text-red-500">${list.filter(s => parseFloat(getAttendanceData(s).percent) < 75).length}</h4>
-                    </div>
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Enrolled Count</p>
-                        <h4 class="text-3xl font-black text-slate-900">${list.length}</h4>
-                    </div>
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Filter</p>
-                        <h4 class="text-lg font-black text-slate-900 mt-2 truncate">${currentCohortFilter}</h4>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-[2.5rem] border border-slate-100 card-shadow overflow-hidden mb-10">
-                    <div class="p-8 border-b border-slate-50 flex justify-between items-center">
-                        <h3 class="font-black text-lg">Compliance Audit Report</h3>
-                        <button onclick="downloadCSVTemplate()" class="text-blue-600 font-bold text-xs flex items-center gap-2 hover:underline">
-                            <i data-lucide="download" class="w-4 h-4"></i> Download Template
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <tr>
-                                    <th class="px-8 py-5">Student</th>
-                                    <th class="px-8 py-5 text-center">Missed (of 22)</th>
-                                    <th class="px-8 py-5 text-center">Attendance %</th>
-                                    <th class="px-8 py-5 text-right">Remark Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                ${list.map(s => {
-                                    const data = getAttendanceData(s);
-                                    return `
-                                    <tr>
-                                        <td class="px-8 py-6 font-bold text-sm">
-                                            ${s.fname} ${s.lname}
-                                            <div class="text-[10px] text-slate-400 font-medium font-mono mt-0.5">${s.matric}</div>
-                                        </td>
-                                        <td class="px-8 py-6 text-center font-bold text-slate-600">${data.missed}</td>
-                                        <td class="px-8 py-6">
-                                            <div class="flex items-center gap-3 justify-center">
-                                                <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div class="h-full ${parseFloat(data.percent) < 75 ? 'bg-red-500' : 'bg-green-500'}" style="width:${data.percent}%"></div>
-                                                </div>
-                                                <span class="text-xs font-black">${data.percent}%</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-8 py-6 text-right">
-                                            <span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight ${data.style}">
-                                                ${data.remark}
-                                            </span>
-                                        </td>
-                                    </tr>`;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="bg-blue-600 p-10 rounded-[3rem] text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl shadow-blue-200">
-                    <div class="p-4 bg-white/10 rounded-2xl"><i data-lucide="user-plus" class="w-10 h-10"></i></div>
-                    <div class="flex-1 text-center md:text-left">
-                        <h3 class="text-xl font-black mb-1">Administrative Onboarding</h3>
-                        <p class="text-blue-100 text-sm max-w-md">Upload your list of students in CSV format to populate this dashboard instantly.</p>
-                    </div>
-                    <input type="file" id="bulk-upload" class="hidden" onchange="handleBulkUpload(this)">
-                    <button onclick="document.getElementById('bulk-upload').click()" class="bg-white text-blue-600 px-8 py-4 rounded-2xl font-black text-sm hover:scale-105 transition-all active:scale-95">
-                        UPLOAD STUDENT CSV
-                    </button>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
-        function renderCourses(el) {
-            el.innerHTML = `
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-xl font-black">Course Catalog</h3>
-                    <button onclick="addNewCourse()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs flex items-center gap-2">
-                        <i data-lucide="plus" class="w-4 h-4"></i> ADD NEW MODULE
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${courses.map(c => `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 card-shadow flex flex-col group hover:border-blue-300 transition-all">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl"><i data-lucide="book" class="w-6 h-6"></i></div>
-                                <button onclick="editCourse('${c.id}')" class="text-slate-300 hover:text-blue-600"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                            </div>
-                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">${c.code}</h4>
-                            <h3 class="text-lg font-black mb-6 flex-1">${c.name}</h3>
-                            <div class="pt-6 border-t border-slate-50 flex justify-between items-center">
-                                <div class="text-xs font-bold text-slate-500">22 Scheduled Sessions</div>
-                                <div class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded">EDITABLE</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        function editCourse(id) {
-            const c = courses.find(x => x.id === id);
-            openModal(`
-                <h3 class="text-2xl font-black mb-8">Edit Module</h3>
-                <div class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase block mb-2">Module Code</label>
-                        <input type="text" id="edit-c-code" value="${c.code}" class="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none font-bold">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase block mb-2">Module Name</label>
-                        <input type="text" id="edit-c-name" value="${c.name}" class="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl outline-none font-bold">
-                    </div>
-                    <div class="flex gap-4 pt-6">
-                        <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400 hover:bg-slate-50 rounded-2xl transition-all">Cancel</button>
-                        <button onclick="saveCourse('${id}')" class="flex-1 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100">Update Module</button>
-                    </div>
-                </div>
-            `);
-        }
-
-        function saveCourse(id) {
-            const c = courses.find(x => x.id === id);
-            c.code = document.getElementById('edit-c-code').value;
-            c.name = document.getElementById('edit-c-name').value;
-            showToast("Module updated successfully");
-            closeModal();
-            refreshView();
-        }
-
-        function renderActivate(el) {
-            el.innerHTML = `
-                <div class="max-w-md mx-auto bg-slate-900 rounded-[3.5rem] border-[12px] border-slate-800 p-6 flex flex-col min-h-[700px] shadow-2xl relative text-white">
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-800 rounded-b-3xl"></div>
-                    
-                    <div class="mt-8 mb-8 text-center">
-                        <h3 class="text-xl font-black">Portal Access</h3>
-                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Active QR Verification</p>
-                    </div>
-
-                    <div class="space-y-6 mb-10">
-                         <div>
-                            <label class="text-[10px] font-black text-slate-400 block mb-2">1. Select Course</label>
-                            <select id="qr-course-id" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none">
-                                ${courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 block mb-2">2. Session Number</label>
-                            <select id="qr-session-idx" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-bold outline-none">
-                                ${Array.from({length:22}, (_,i)=>`<option value="${i}">Session ${i+1}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="flex-1 flex flex-col items-center justify-center p-6 bg-white/[0.03] rounded-[2.5rem] border border-white/5 relative mb-10 overflow-hidden">
-                        <div class="absolute inset-x-4 h-1 bg-blue-500/40 scan-line z-10"></div>
-                        <!-- Simulated QR Code SVG -->
-                        <div class="bg-white p-4 rounded-3xl relative z-0">
-                            <svg width="180" height="180" viewBox="0 0 100 100" class="text-slate-900">
-                                <rect x="10" y="10" width="20" height="20" fill="currentColor"/>
-                                <rect x="70" y="10" width="20" height="20" fill="currentColor"/>
-                                <rect x="10" y="70" width="20" height="20" fill="currentColor"/>
-                                <rect x="15" y="15" width="10" height="10" fill="white"/>
-                                <rect x="75" y="15" width="10" height="10" fill="white"/>
-                                <rect x="15" y="75" width="10" height="10" fill="white"/>
-                                ${Array.from({length:15}, () => `<rect x="${Math.random()*60+20}" y="${Math.random()*60+20}" width="5" height="5" fill="currentColor"/>`).join('')}
-                            </svg>
-                        </div>
-                        <p class="mt-8 text-xs font-bold text-slate-400">Share this QR with students</p>
-                    </div>
-
-                    <button onclick="showToast('QR Token Refreshed')" class="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-black text-sm shadow-xl shadow-blue-900/50 hover:bg-blue-500 transition-all">
-                        REFRESH TOKEN
-                    </button>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
-        function renderRegistry(el) {
-            const list = getFilteredStudents();
-            el.innerHTML = `
-                <div class="bg-white rounded-[3rem] card-shadow border border-slate-100 overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <tr>
-                                <th class="px-8 py-6">Student Info</th>
-                                <th class="px-8 py-6">Contact Details</th>
-                                <th class="px-8 py-6">Course Enrollment</th>
-                                <th class="px-8 py-6 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            ${list.map(s => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-8 py-6">
-                                        <div class="font-bold text-sm">${s.fname} ${s.lname}</div>
-                                        <div class="text-[10px] text-slate-400 font-mono">${s.matric}</div>
-                                    </td>
-                                    <td class="px-8 py-6">
-                                        <div class="text-xs font-medium text-slate-600">${s.email}</div>
-                                        <div class="bg-slate-100 text-[8px] font-black px-1.5 py-0.5 rounded inline-block text-slate-500 mt-1 uppercase">${s.cohort}</div>
-                                    </td>
-                                    <td class="px-8 py-6">
-                                        <div class="text-xs font-bold text-slate-700">${courses.find(c => c.id === s.courseId)?.name || 'N/A'}</div>
-                                    </td>
-                                    <td class="px-8 py-6 text-right">
-                                        <button onclick="deleteStudent('${s.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </td>
-                                </tr>`).join('')}
-                        </tbody>
-                    </table>
-                    ${list.length === 0 ? '<div class="p-24 text-center text-slate-400 font-bold">No students registered in this filter.</div>' : ''}
-                </div>
-            `;
-        }
-
-        function renderMatrix(el) {
-            const list = getFilteredStudents();
-            el.innerHTML = `
-                <div class="bg-white rounded-[3rem] card-shadow border border-slate-100 p-10 overflow-x-auto">
-                    <div class="min-w-[1200px] space-y-3">
-                        <div class="flex items-center gap-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-4 mb-2">
-                            <div class="w-56">Student Name</div>
-                            <div class="flex-1 flex gap-1">
-                                ${Array.from({length:22}, (_,i)=>`<div class="w-8 text-center">${i+1}</div>`).join('')}
-                            </div>
-                        </div>
-                        ${list.map(s => `
-                            <div class="flex items-center gap-4 p-4 bg-slate-50/50 rounded-2xl hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
-                                <div class="w-56">
-                                    <div class="font-black text-xs truncate uppercase">${s.fname} ${s.lname}</div>
-                                    <div class="text-[9px] text-blue-500 font-bold tracking-tight">${s.matric}</div>
-                                </div>
-                                <div class="flex-1 flex gap-1">
-                                    ${s.sessions.map((v, i) => `
-                                        <button onclick="toggleAttendance('${s.id}', ${i})" class="w-8 h-8 rounded-lg flex items-center justify-center transition-all ${v === 1 ? 'bg-green-500 text-white shadow-md shadow-green-100' : 'bg-slate-200 text-transparent'}">
-                                            <i data-lucide="check" class="w-3 h-3"></i>
-                                        </button>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
-        // --- HANDLERS ---
-        function toggleAttendance(studentId, sessionIdx) {
-            const s = students.find(x => x.id === studentId);
-            s.sessions[sessionIdx] = s.sessions[sessionIdx] === 1 ? 0 : 1;
-            refreshView();
-        }
-
-        function handleBulkUpload(input) {
-            if (!input.files || !input.files[0]) return;
-            showToast("Processing CSV Data... Adding students to " + currentCohortFilter);
-            setTimeout(() => {
-                showToast("12 New Students Added Successfully");
-                refreshView();
-            }, 1500);
-        }
-
-        function downloadCSVTemplate() {
-            const headers = "Last Name,First Name,Matric Number,Email Address,Phone Number\n";
-            const blob = new Blob([headers], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = "attendx_student_template.csv";
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
-
-        function deleteStudent(id) {
-            openModal(`
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <i data-lucide="alert-triangle" class="w-10 h-10"></i>
-                    </div>
-                    <h3 class="text-2xl font-black mb-2">Are you sure?</h3>
-                    <p class="text-slate-500 text-sm mb-8">This will permanently remove the student record and all session data.</p>
-                    <div class="flex gap-4">
-                        <button onclick="closeModal()" class="flex-1 py-4 font-bold text-slate-400">Cancel</button>
-                        <button onclick="confirmDeleteStudent('${id}')" class="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl shadow-lg shadow-red-100">Delete Student</button>
-                    </div>
-                </div>
-            `);
-        }
-
-        function confirmDeleteStudent(id) {
-            students = students.filter(s => s.id !== id);
-            closeModal();
-            showToast("Student record purged.");
-            refreshView();
-        }
-
-        function refreshView() { switchView(activeView); }
-
-        function init() { 
-            const filter = document.getElementById('global-cohort-filter');
-            COHORTS.forEach(c => {
+        function init() {
+            const select = document.getElementById('global-cohort-filter');
+            ALL_COHORTS.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c; opt.innerText = c;
-                filter.appendChild(opt);
+                select.appendChild(opt);
             });
-            switchView('dashboard'); 
+            switchView('overview');
         }
-        
+
         init();
     </script>
 </body>
