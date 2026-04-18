@@ -306,50 +306,138 @@
             const list = filter === 'ALL' ? students : students.filter(s => s.courseCode === filter);
             el.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <!-- Add Student Form -->
-                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                        <h4 class="font-black text-lg mb-6">Enroll Student</h4>
-                        <div class="space-y-4">
-                            <input id="stu-firstname" placeholder="First Name" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                            <input id="stu-lastname" placeholder="Last Name" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                            <input id="stu-matric" placeholder="Matric (e.g. 24/CSC/001)" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                            <select id="stu-course" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
-                                ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
-                            </select>
-                            <button id="stu-action-btn" onclick="addStudent()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black hover:bg-blue-600 transition-all">Enroll Student</button>
-                            <button id="stu-cancel-btn" onclick="clearStudentForm()" class="w-full text-slate-400 text-xs font-bold hidden">Cancel Edit</button>
+                    <!-- Enrollment Sidebar -->
+                    <div class="space-y-8">
+                        <!-- Single Form -->
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                            <h4 class="font-black text-lg mb-6 flex items-center gap-2">
+                                <i data-lucide="user-plus" class="w-5 h-5 text-blue-600"></i> Single Entry
+                            </h4>
+                            <div class="space-y-4">
+                                <input id="stu-firstname" placeholder="First Name" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
+                                <input id="stu-lastname" placeholder="Last Name" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
+                                <input id="stu-matric" placeholder="Matric No." class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
+                                <select id="stu-course" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-blue-600">
+                                    ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
+                                </select>
+                                <button id="stu-action-btn" onclick="addStudent()" class="w-full bg-slate-950 text-white py-4 rounded-2xl font-black hover:bg-blue-600 transition-all">Enroll Student</button>
+                                <button id="stu-cancel-btn" onclick="clearStudentForm()" class="w-full text-slate-400 text-xs font-bold hidden text-center mt-2">Cancel Edit</button>
+                            </div>
+                        </div>
+
+                        <!-- Bulk Enrollment -->
+                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                            <h4 class="font-black text-lg mb-2 flex items-center gap-2">
+                                <i data-lucide="layers" class="w-5 h-5 text-purple-600"></i> Bulk Upload
+                            </h4>
+                            <p class="text-[10px] text-slate-400 mb-4 leading-relaxed uppercase font-black">Paste from Excel or use CSV format:<br>FirstName, LastName, Matric</p>
+                            <div class="space-y-4">
+                                <textarea id="bulk-input" rows="5" placeholder="Faith Okon 24/CSC/001&#10;John Smith 24/CSC/002" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-mono text-xs font-bold outline-none focus:border-purple-600"></textarea>
+                                <select id="bulk-course" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold outline-none focus:border-purple-600">
+                                    ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
+                                </select>
+                                <button onclick="processBulkEnrollment()" class="w-full bg-purple-600 text-white py-4 rounded-2xl font-black hover:bg-purple-700 transition-all">Upload Batch</button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Student Table -->
-                    <div class="lg:col-span-3 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                                <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5">Matric No.</th><th class="px-8 py-5">Course</th><th class="px-8 py-5 text-right">Actions</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                ${list.map(s => `
-                                    <tr>
-                                        <td class="px-8 py-5 flex items-center gap-3">
-                                            <img src="${s.pic}" class="w-8 h-8 rounded-lg">
-                                            <span class="font-bold text-sm text-slate-800">${s.firstName} ${s.lastName}</span>
-                                        </td>
-                                        <td class="px-8 py-5 font-mono text-xs text-slate-400">${s.matric}</td>
-                                        <td class="px-8 py-5">
-                                            <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase">${s.courseCode}</span>
-                                        </td>
-                                        <td class="px-8 py-5 text-right space-x-2">
-                                            <button onclick="editStudent('${s.id}')" class="text-slate-300 hover:text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                                            <button onclick="deleteStudent('${s.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="user-minus" class="w-4 h-4"></i></button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                    <div class="lg:col-span-3 bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-8 border-b border-slate-50 flex justify-between items-center">
+                            <h4 class="font-black text-xl">Enrollment List</h4>
+                            <div class="text-slate-400 text-xs font-bold uppercase tracking-wider">${list.length} Records Found</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                                    <tr><th class="px-8 py-5">Student Details</th><th class="px-8 py-5">Matric No.</th><th class="px-8 py-5">Course</th><th class="px-8 py-5 text-right">Actions</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    ${list.map(s => `
+                                        <tr class="hover:bg-slate-50/50 transition-colors">
+                                            <td class="px-8 py-5 flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-xl bg-slate-100 flex-shrink-0 overflow-hidden border-2 border-white shadow-sm">
+                                                    <img src="${s.pic}" class="w-full h-full object-cover">
+                                                </div>
+                                                <div>
+                                                    <p class="font-black text-sm text-slate-800">${s.firstName} ${s.lastName}</p>
+                                                    <p class="text-[10px] text-slate-400 uppercase font-bold">Regular Student</p>
+                                                </div>
+                                            </td>
+                                            <td class="px-8 py-5 font-mono text-xs text-slate-500 font-bold">${s.matric}</td>
+                                            <td class="px-8 py-5">
+                                                <span class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase ring-1 ring-blue-100">${s.courseCode}</span>
+                                            </td>
+                                            <td class="px-8 py-5 text-right">
+                                                <div class="flex justify-end gap-2">
+                                                    <button onclick="editStudent('${s.id}')" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 flex items-center justify-center transition-all"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                                    <button onclick="deleteStudent('${s.id}')" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all"><i data-lucide="user-minus" class="w-4 h-4"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                    ${list.length === 0 ? `<tr><td colspan="4" class="px-8 py-20 text-center text-slate-300 font-bold">No students found in this module.</td></tr>` : ''}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             `;
             lucide.createIcons();
+        }
+
+        function processBulkEnrollment() {
+            const rawData = document.getElementById('bulk-input').value.trim();
+            const course = document.getElementById('bulk-course').value;
+            
+            if (!rawData) return showToast("Nothing to upload");
+            
+            const lines = rawData.split(/\n/);
+            let addedCount = 0;
+            let errors = 0;
+
+            lines.forEach(line => {
+                // Split by comma, tab, or multiple spaces
+                const parts = line.split(/[,\t]|\s{2,}/).map(p => p.trim()).filter(p => p);
+                
+                // Flexible parsing: Try to find at least names and a matric-like string
+                if (parts.length >= 2) {
+                    let firstName, lastName, matric;
+                    
+                    if (parts.length >= 3) {
+                        firstName = parts[0];
+                        lastName = parts[1];
+                        matric = parts[2];
+                    } else {
+                        // Fallback: split names from first part
+                        const nameParts = parts[0].split(' ');
+                        firstName = nameParts[0];
+                        lastName = nameParts.slice(1).join(' ') || 'Student';
+                        matric = parts[1];
+                    }
+
+                    students.push({
+                        id: 's' + Date.now() + Math.random(),
+                        matric: matric.toUpperCase(),
+                        firstName,
+                        lastName,
+                        courseCode: course,
+                        sessions: Array(22).fill(0),
+                        pic: `https://i.pravatar.cc/150?u=${Math.random()}`
+                    });
+                    addedCount++;
+                } else if (line.trim()) {
+                    errors++;
+                }
+            });
+
+            if (addedCount > 0) {
+                showToast(`Successfully enrolled ${addedCount} students`);
+                document.getElementById('bulk-input').value = '';
+                refreshView();
+            } else {
+                showToast("Failed to parse any data. Check format.");
+            }
         }
 
         let editingStudentId = null;
@@ -364,7 +452,7 @@
 
             students.push({
                 id: 's' + Date.now(),
-                matric,
+                matric: matric.toUpperCase(),
                 firstName: first,
                 lastName: last,
                 courseCode: course,
@@ -387,15 +475,20 @@
 
             const btn = document.getElementById('stu-action-btn');
             btn.innerText = "Update Records";
+            btn.classList.remove('bg-slate-950');
+            btn.classList.add('bg-blue-600');
             btn.setAttribute('onclick', 'saveStudentEdit()');
             document.getElementById('stu-cancel-btn').classList.remove('hidden');
+            
+            // Scroll form into view for better UX on mobile
+            document.getElementById('stu-firstname').focus();
         }
 
         function saveStudentEdit() {
             const s = students.find(x => x.id === editingStudentId);
             s.firstName = document.getElementById('stu-firstname').value.trim();
             s.lastName = document.getElementById('stu-lastname').value.trim();
-            s.matric = document.getElementById('stu-matric').value.trim();
+            s.matric = document.getElementById('stu-matric').value.trim().toUpperCase();
             s.courseCode = document.getElementById('stu-course').value;
 
             showToast("Record updated");
@@ -410,6 +503,8 @@
             document.getElementById('stu-matric').value = '';
             const btn = document.getElementById('stu-action-btn');
             btn.innerText = "Enroll Student";
+            btn.classList.remove('bg-blue-600');
+            btn.classList.add('bg-slate-950');
             btn.setAttribute('onclick', 'addStudent()');
             document.getElementById('stu-cancel-btn').classList.add('hidden');
         }
@@ -425,17 +520,22 @@
             const filter = document.getElementById('global-course-filter').value;
             const list = filter === 'ALL' ? students : students.filter(s => s.courseCode === filter);
             el.innerHTML = `
-                <div class="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm">
+                <div class="bg-white rounded-[3rem] border border-slate-100 p-8 shadow-sm">
+                    <div class="flex items-center gap-3 mb-8 overflow-x-auto pb-4 no-scrollbar">
+                         <div class="flex-shrink-0 bg-slate-50 px-4 py-2 rounded-xl text-[10px] font-black text-slate-400 uppercase">Key:</div>
+                         <div class="flex items-center gap-2"><div class="session-dot present"></div><span class="text-xs font-bold text-slate-500">Present</span></div>
+                         <div class="flex items-center gap-2"><div class="session-dot absent"></div><span class="text-xs font-bold text-slate-500">Absent</span></div>
+                    </div>
                     <div class="space-y-4">
                         ${list.map(s => `
-                            <div class="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl">
-                                <div class="w-40 shrink-0">
-                                    <p class="font-bold text-slate-800 text-sm truncate">${s.firstName} ${s.lastName}</p>
-                                    <p class="text-[9px] font-black text-slate-400 uppercase">${s.courseCode}</p>
+                            <div class="flex items-center gap-6 p-4 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                <div class="w-44 shrink-0">
+                                    <p class="font-black text-slate-800 text-sm truncate">${s.firstName} ${s.lastName}</p>
+                                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">${s.courseCode} • ${s.matric}</p>
                                 </div>
-                                <div class="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar">
+                                <div class="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar py-2">
                                     ${s.sessions.map((v, i) => `
-                                        <div class="session-dot ${v === 1 ? 'present' : 'absent'}"></div>
+                                        <div class="session-dot ${v === 1 ? 'present' : 'absent'}" title="Session ${i+1}"></div>
                                     `).join('')}
                                 </div>
                             </div>
@@ -448,20 +548,30 @@
         // --- QR & STUDENT INTERACTION ---
         function renderQRLauncher(el) {
             el.innerHTML = `
-                <div class="max-w-2xl mx-auto bg-white p-12 rounded-[3rem] border border-slate-100 shadow-xl text-center">
-                    <h3 class="text-3xl font-black text-slate-900 mb-2">Activate Attendance</h3>
-                    <p class="text-slate-400 mb-10 font-medium">Select a module to generate QR.</p>
-                    <div class="grid grid-cols-2 gap-6 mb-8 text-left">
-                        <select id="launch-course" class="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold">
-                            ${courses.map(c => `<option value="${c.code}">${c.code}</option>`).join('')}
-                        </select>
-                        <select id="launch-session" class="bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 font-bold">
-                            ${Array.from({length: 22}, (_, i) => `<option value="${i+1}">Session ${i+1}</option>`).join('')}
-                        </select>
+                <div class="max-w-2xl mx-auto bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl text-center">
+                    <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-blue-100">
+                         <i data-lucide="zap" class="w-10 h-10 text-blue-600"></i>
                     </div>
-                    <button onclick="startQRSession()" class="w-full bg-slate-950 text-white py-5 rounded-[2rem] font-black text-lg hover:bg-blue-600 transition-all">GENERATE QR</button>
+                    <h3 class="text-3xl font-black text-slate-900 mb-2">Activate Attendance</h3>
+                    <p class="text-slate-400 mb-10 font-medium">Select a module to generate an active check-in QR code.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-left">
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Module</label>
+                            <select id="launch-course" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 font-bold outline-none focus:border-blue-600">
+                                ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-2 block">Session</label>
+                            <select id="launch-session" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 font-bold outline-none focus:border-blue-600">
+                                ${Array.from({length: 22}, (_, i) => `<option value="${i+1}">Session ${i+1}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="startQRSession()" class="w-full bg-slate-950 text-white py-6 rounded-[2.5rem] font-black text-lg hover:bg-blue-600 shadow-2xl shadow-blue-500/20 transition-all active:scale-95">INITIATE SESSION</button>
                 </div>
             `;
+            lucide.createIcons();
         }
 
         function startQRSession() {
@@ -480,23 +590,31 @@
                 <div class="max-w-xl mx-auto text-center">
                     <div class="bg-white p-12 rounded-[4rem] shadow-2xl border border-slate-100 relative mb-10">
                         <div class="flex justify-between items-start mb-10">
-                            <div class="text-left"><p class="text-[10px] font-black text-blue-600 uppercase">${liveSession.course}</p><h3 class="text-2xl font-black">Session ${liveSession.sessionIndex + 1}</h3></div>
-                            <div class="text-right"><p class="text-[10px] font-black text-red-500 uppercase timer-animate tracking-widest">Active</p><h3 id="timer-display" class="text-2xl font-black font-mono">15:00</h3></div>
+                            <div class="text-left"><p class="text-[10px] font-black text-blue-600 uppercase tracking-wider">${liveSession.course}</p><h3 class="text-2xl font-black">Attendance Gate</h3></div>
+                            <div class="text-right flex items-center gap-3 bg-red-50 px-4 py-2 rounded-2xl border border-red-100">
+                                <div class="w-2 h-2 bg-red-500 rounded-full timer-animate"></div>
+                                <h3 id="timer-display" class="text-lg font-black font-mono text-red-600">15:00</h3>
+                            </div>
                         </div>
-                        <div id="qrcode" class="mb-10 p-4 inline-block bg-slate-50 rounded-[2.5rem]"></div>
+                        <div id="qrcode" class="mb-10 p-6 inline-block bg-white border-2 border-slate-50 rounded-[3rem] shadow-inner"></div>
                         
-                        <div class="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-sm font-bold text-yellow-700 flex items-center gap-3 justify-center mb-6">
-                            <i data-lucide="info" class="w-4 h-4"></i>
-                            Students: Scan with phone to open selection list
+                        <div class="p-6 bg-slate-50 rounded-3xl border border-slate-100 text-sm font-bold text-slate-600 flex items-center gap-4 text-left leading-snug mb-8">
+                            <div class="p-3 bg-white rounded-xl shadow-sm"><i data-lucide="smartphone" class="w-5 h-5 text-blue-600"></i></div>
+                            <div>
+                                <p class="text-slate-900 font-black">Student Access Protocol</p>
+                                <p class="text-xs text-slate-400 font-medium uppercase tracking-tight">Scan with any mobile browser camera</p>
+                            </div>
                         </div>
 
-                        <button onclick="openStudentView()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl shadow-blue-500/30">SIMULATE STUDENT SCAN</button>
+                        <button onclick="openStudentView()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl shadow-blue-500/30 hover:scale-[1.02] transition-transform">SIMULATE MOBILE SCAN</button>
                     </div>
-                    <button onclick="endLiveSession()" class="text-slate-400 hover:text-red-500 font-black text-sm">END SESSION</button>
+                    <button onclick="endLiveSession()" class="text-slate-400 hover:text-red-500 font-black text-sm uppercase tracking-widest flex items-center gap-2 mx-auto justify-center transition-colors">
+                        <i data-lucide="power" class="w-4 h-4"></i> DISCONTINUE SESSION
+                    </button>
                 </div>
             `;
             setTimeout(() => {
-                new QRCode(document.getElementById("qrcode"), { text: "student-scan-token", width: 220, height: 220, colorDark: "#020617", colorLight: "#f8fafc" });
+                new QRCode(document.getElementById("qrcode"), { text: "student-scan-token", width: 220, height: 220, colorDark: "#020617", colorLight: "#ffffff" });
                 startTimer();
                 lucide.createIcons();
             }, 100);
@@ -521,10 +639,9 @@
             const modal = document.getElementById('student-view');
             const select = document.getElementById('student-select');
             
-            // Filter only students in this course who haven't signed yet
             const candidates = students.filter(s => s.courseCode === liveSession.course && s.sessions[liveSession.sessionIndex] === 0);
             
-            select.innerHTML = '<option value="">Choose from list...</option>';
+            select.innerHTML = '<option value="">Select your details...</option>';
             candidates.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
@@ -532,7 +649,7 @@
                 select.appendChild(opt);
             });
 
-            document.getElementById('student-view-info').innerText = `Signing in for ${liveSession.course} - Session ${liveSession.sessionIndex + 1}`;
+            document.getElementById('student-view-info').innerText = `Self Check-in: ${liveSession.course} - Session ${liveSession.sessionIndex + 1}`;
             modal.classList.remove('hidden');
             lucide.createIcons();
         }
@@ -548,7 +665,7 @@
             const student = students.find(s => s.id === sid);
             student.sessions[liveSession.sessionIndex] = 1;
             
-            showToast(`Attendance recorded for ${student.firstName}!`);
+            showToast(`Success! Attendance logged for ${student.firstName}.`);
             closeStudentView();
         }
 
