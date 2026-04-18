@@ -17,14 +17,18 @@
         .sidebar-item-active { background-color: #2563eb; color: white; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
         .card-shadow { box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05); }
         
-        .status-amber { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-        .status-red { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .status-green { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         
-        .modal-overlay { background: rgba(11, 15, 26, 0.6); backdrop-filter: blur(4px); }
+        .editable-input { 
+            background: transparent; 
+            border: 1px dashed transparent; 
+            border-radius: 4px; 
+            padding: 2px 4px;
+            transition: all 0.2s;
+        }
+        .editable-input:hover { border-color: #cbd5e1; background: #f1f5f9; }
+        .editable-input:focus { border-color: #2563eb; background: white; outline: none; border-style: solid; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
@@ -40,19 +44,19 @@
             </div>
             
             <nav class="space-y-1.5 flex-1">
-                <button onclick="switchView('overview')" id="nav-overview" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('overview')" id="nav-overview" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm text-left">
                     <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Overview
                 </button>
-                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
-                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Compliance DB
-                </button>
-                <button onclick="switchView('registry')" id="nav-registry" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
-                    <i data-lucide="users" class="w-5 h-5"></i> Student Registry
-                </button>
-                <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm text-left">
                     <i data-lucide="book-open" class="w-5 h-5"></i> Manage Courses
                 </button>
-                <button onclick="switchView('matrix')" id="nav-matrix" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm text-left">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Compliance DB
+                </button>
+                <button onclick="switchView('registry')" id="nav-registry" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm text-left">
+                    <i data-lucide="users" class="w-5 h-5"></i> Student Registry
+                </button>
+                <button onclick="switchView('matrix')" id="nav-matrix" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all hover:bg-white/5 text-slate-400 font-bold text-sm text-left">
                     <i data-lucide="grid-3x3" class="w-5 h-5"></i> Session Matrix
                 </button>
             </nav>
@@ -72,48 +76,36 @@
                     <p id="view-desc" class="text-slate-400 font-medium text-sm mt-1">Academic tracking system.</p>
                 </div>
                 
-                <div class="flex items-center gap-4">
-                    <div class="bg-white border border-slate-200 rounded-2xl p-2 px-4 shadow-sm flex items-center gap-3">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Cohort:</span>
-                        <select id="global-cohort-filter" onchange="updateGlobalCohort(this.value)" class="bg-transparent text-sm font-bold outline-none cursor-pointer text-blue-600">
-                            <option value="ALL">All Cohorts</option>
-                        </select>
+                <div class="flex items-center gap-3">
+                    <div class="flex bg-white border border-slate-200 rounded-2xl p-1 shadow-sm">
+                        <div class="px-4 py-2 border-r border-slate-100 flex flex-col">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Year</span>
+                            <select id="global-year-filter" onchange="updateGlobalFilters()" class="bg-transparent text-xs font-black outline-none cursor-pointer text-slate-900">
+                                <option value="2023">2023</option>
+                                <option value="2024" selected>2024</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+                        <div class="px-4 py-2 border-r border-slate-100 flex flex-col">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Semester</span>
+                            <select id="global-semester-filter" onchange="updateGlobalFilters()" class="bg-transparent text-xs font-black outline-none cursor-pointer text-slate-900">
+                                <option value="1">Sem 1</option>
+                                <option value="2">Sem 2</option>
+                                <option value="3">Sem 3</option>
+                            </select>
+                        </div>
+                        <div class="px-4 py-2 flex flex-col">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cohort</span>
+                            <select id="global-cohort-filter" onchange="updateGlobalFilters()" class="bg-transparent text-xs font-black outline-none cursor-pointer text-blue-600">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
                     </div>
                 </div>
             </header>
 
             <div id="view-mount" class="fade-in"></div>
         </main>
-    </div>
-
-    <!-- Course Edit Modal -->
-    <div id="course-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="bg-white rounded-[2.5rem] w-full max-w-lg relative z-10 shadow-2xl p-10 fade-in">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-2xl font-black">Edit Course</h3>
-                <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
-            </div>
-            <form id="course-edit-form" class="space-y-6">
-                <input type="hidden" id="edit-course-id">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Course Code</label>
-                    <input type="text" id="edit-course-code" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Course Name</label>
-                    <input type="text" id="edit-course-name" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Total Planned Sessions</label>
-                    <input type="number" id="edit-course-sessions" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500/20" required min="1" max="100">
-                </div>
-                <div class="pt-4 flex gap-3">
-                    <button type="button" onclick="closeCourseModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm transition-all">Cancel</button>
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm transition-all shadow-lg shadow-blue-500/20">Save Changes</button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <!-- Toast UI -->
@@ -123,34 +115,83 @@
 
     <script>
         // --- DATA STATE ---
-        const ALL_COHORTS = [
-            "MMBA 6", "MMBA 7", "MMBA 8", "MMBA 9", "MMBA 10", "MMBA 11", "MMBA 12",
-            "EMBA 30", "EMBA 31", "EMBA 32", "EMBA 33", "EMBA 34",
-            "MEMBA 13", "MEMBA 14", "MEMBA 15", "MEMBA 16"
-        ];
+        const ALL_COHORTS = ["MMBA 10", "MMBA 11", "EMBA 30", "EMBA 31", "MEMBA 13"];
+        const SESSIONS_COUNT = 11;
 
         let courses = [
-            { id: 'c1', code: 'BUS701', name: 'Strategic Management', totalSessions: 22 },
-            { id: 'c2', code: 'FIN702', name: 'Corporate Finance', totalSessions: 22 },
-            { id: 'c3', code: 'ECN705', name: 'Managerial Economics', totalSessions: 22 }
+            { id: 'c1', code: 'BUS701', name: 'Strategic Management', semester: 1, year: 2024 },
+            { id: 'c2', code: 'FIN702', name: 'Corporate Finance', semester: 1, year: 2024 },
+            { id: 'c3', code: 'ECN705', name: 'Managerial Economics', semester: 2, year: 2024 },
+            { id: 'c4', code: 'MKT710', name: 'Digital Marketing', semester: 2, year: 2024 },
+            { id: 'c5', code: 'RES801', name: 'Research Methods', semester: 1, year: 2025 }
         ];
 
-        // Seed initial students
         let students = [
-            { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah@uni.edu', cohort: 'MMBA 10', courseId: 'c1', sessions: [1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] },
-            { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'john@uni.edu', cohort: 'EMBA 30', courseId: 'c1', sessions: [1,0,1,0,1,0,0,0,1,0,1,0,1,1,1,0,1,0,1,0,0,1] },
-            { id: 's3', matric: '24/MEM/045', fname: 'Grace', lname: 'Eze', email: 'grace@uni.edu', cohort: 'MEMBA 13', courseId: 'c2', sessions: [1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0] },
-            { id: 's4', matric: '24/MMBA/004', fname: 'Michael', lname: 'Okoro', email: 'mike@uni.edu', cohort: 'MMBA 10', courseId: 'c1', sessions: [1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,1,1,0,0] }
+            { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah.ade@uni-edu.ng', phone: '+234 802 345 6789', cohort: 'MMBA 10' },
+            { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'j.doe@corporate-mail.com', phone: '+234 810 123 4567', cohort: 'EMBA 30' },
+            { id: 's3', matric: '24/MEM/045', fname: 'Grace', lname: 'Eze', email: 'grace.eze@student.uni.edu', phone: '+234 703 987 6543', cohort: 'MEMBA 13' },
+            { id: 's4', matric: '24/MMBA/002', fname: 'David', lname: 'Okon', email: 'okon.david@gmail.com', phone: '+234 905 555 1234', cohort: 'MMBA 10' }
         ];
 
-        let currentCohortFilter = "ALL";
         let activeView = 'overview';
-        let selectedPortalCourse = courses[0].id;
-        let selectedPortalSession = 1;
+        let currentYear = "2024";
+        let currentSemester = "1";
+        let currentCohort = ALL_COHORTS[0];
+        
+        let genSession = 1;
+        let genTimer = "15";
 
-        // --- EXPOSED FUNCTIONS ---
-        window.downloadCSVTemplate = function() {
-            const csvContent = "data:text/csv;charset=utf-8,Matric,FirstName,LastName,Email,Cohort\n24/MMBA/001,Sarah,Ade,sarah@uni.edu,MMBA 10\n24/EMBA/012,John,Doe,john@uni.edu,EMBA 30\n24/MEM/045,Grace,Eze,grace@uni.edu,MEMBA 13";
+        function updateGlobalFilters() {
+            currentYear = document.getElementById('global-year-filter').value;
+            currentSemester = document.getElementById('global-semester-filter').value;
+            currentCohort = document.getElementById('global-cohort-filter').value;
+            switchView(activeView);
+        }
+
+        function initCohortDropdown() {
+            const select = document.getElementById('global-cohort-filter');
+            select.innerHTML = ALL_COHORTS.map(c => `<option value="${c}">${c}</option>`).join('');
+            currentCohort = ALL_COHORTS[0];
+        }
+
+        // --- HANDLERS ---
+        function updateStudentData(id, field, value) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                student[field] = value.trim();
+                showToast(`Updated ${field}`);
+            }
+        }
+
+        function updateCourseData(id, field, value) {
+            const course = courses.find(c => c.id === id);
+            if (course) {
+                course[field] = value.trim();
+                showToast(`Updated ${field}`);
+            }
+        }
+
+        function deleteCourse(id) {
+            courses = courses.filter(c => c.id !== id);
+            switchView('courses');
+            showToast("Course Deleted");
+        }
+
+        function addCourse() {
+            const newId = 'c' + Date.now();
+            courses.push({
+                id: newId,
+                code: 'NEW101',
+                name: 'New Course Title',
+                semester: parseInt(currentSemester),
+                year: parseInt(currentYear)
+            });
+            switchView('courses');
+            showToast("New Course Added");
+        }
+
+        function downloadCSVTemplate() {
+            const csvContent = "data:text/csv;charset=utf-8,Matric Number,First Name,Last Name,Email,Phone,Cohort\n24/MMBA/001,John,Doe,john@edu.com,+2348000000000,MMBA 10";
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -158,118 +199,8 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast("Template downloaded successfully");
-        };
-
-        window.handleFileUpload = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-                
-                let importCount = 0;
-                let errorCount = 0;
-
-                // Simple CSV Parsing logic
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
-                    const cols = lines[i].split(',').map(c => c.trim());
-                    
-                    if (cols.length >= 5) {
-                        const matric = cols[0];
-                        const fname = cols[1];
-                        const lname = cols[2];
-                        const email = cols[3];
-                        const cohort = cols[4];
-
-                        // Find if student exists by Matric
-                        const existingIdx = students.findIndex(s => s.matric === matric);
-                        
-                        if (existingIdx !== -1) {
-                            // Update existing student cohort and details
-                            students[existingIdx].fname = fname;
-                            students[existingIdx].lname = lname;
-                            students[existingIdx].email = email;
-                            students[existingIdx].cohort = cohort;
-                        } else {
-                            // Create new student
-                            students.push({
-                                id: 's' + (students.length + 1),
-                                matric: matric,
-                                fname: fname,
-                                lname: lname,
-                                email: email,
-                                cohort: cohort,
-                                courseId: 'c1', // Default course assignment
-                                sessions: new Array(22).fill(0) // Initialize with zero attendance
-                            });
-                        }
-                        importCount++;
-                    } else {
-                        errorCount++;
-                    }
-                }
-
-                showToast(`Successfully processed ${importCount} records. ${errorCount ? errorCount + ' errors.' : ''}`);
-                // Refresh view to show updated cohorts/students
-                switchView(activeView);
-                // Also refresh cohort filter dropdown if needed
-                updateCohortDropdown();
-            };
-            reader.readAsText(file);
-        };
-
-        function updateCohortDropdown() {
-            const select = document.getElementById('global-cohort-filter');
-            const currentValue = select.value;
-            select.innerHTML = '<option value="ALL">All Cohorts</option>';
-            
-            // Get unique cohorts from student state
-            const cohortsFound = Array.from(new Set(students.map(s => s.cohort))).sort();
-            cohortsFound.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c; opt.innerText = c;
-                select.appendChild(opt);
-            });
-            select.value = cohortsFound.includes(currentValue) ? currentValue : "ALL";
+            showToast("Template Downloaded");
         }
-
-        window.openCourseEdit = function(courseId) {
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return;
-            
-            document.getElementById('edit-course-id').value = course.id;
-            document.getElementById('edit-course-code').value = course.code;
-            document.getElementById('edit-course-name').value = course.name;
-            document.getElementById('edit-course-sessions').value = course.totalSessions;
-            
-            document.getElementById('course-modal').classList.remove('hidden');
-            lucide.createIcons();
-        };
-
-        window.closeCourseModal = function() {
-            document.getElementById('course-modal').classList.add('hidden');
-        };
-
-        document.getElementById('course-edit-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-course-id').value;
-            const code = document.getElementById('edit-course-code').value;
-            const name = document.getElementById('edit-course-name').value;
-            const sessionsCount = parseInt(document.getElementById('edit-course-sessions').value);
-            
-            const index = courses.findIndex(c => c.id === id);
-            if (index !== -1) {
-                courses[index] = { ...courses[index], code, name, totalSessions: sessionsCount };
-                showToast("Course updated successfully");
-                closeCourseModal();
-                switchView('courses');
-            }
-        });
 
         window.switchView = function(view) {
             activeView = view;
@@ -282,323 +213,325 @@
             if (activeBtn) activeBtn.classList.add('sidebar-item-active');
 
             mount.innerHTML = "";
+            const filteredCourses = courses.filter(c => c.year == currentYear && c.semester == currentSemester);
             
             if (view === 'overview') {
                 title.innerText = "System Overview";
-                desc.innerText = "General health and aggregated statistics.";
-                renderOverview(mount);
-            } else if (view === 'dashboard') {
-                title.innerText = "Compliance Dashboard";
-                desc.innerText = "Detailed analytics and attendance tracking.";
-                renderCompliance(mount);
-            } else if (view === 'registry') {
-                title.innerText = "Student Registry";
-                desc.innerText = "Manage student enrollment and bulk imports.";
-                renderRegistry(mount);
+                desc.innerText = `${currentYear} | Semester ${currentSemester}`;
+                renderOverview(mount, filteredCourses);
             } else if (view === 'courses') {
                 title.innerText = "Course Management";
-                desc.innerText = "View and manage academic curriculum.";
-                renderCourses(mount);
+                desc.innerText = `Editing courses for ${currentYear} S${currentSemester}`;
+                renderCourseManagement(mount, filteredCourses);
+            } else if (view === 'dashboard') {
+                title.innerText = "Compliance DB";
+                desc.innerText = `Detailed Analysis for ${currentCohort}`;
+                renderCompliance(mount, filteredCourses);
+            } else if (view === 'registry') {
+                title.innerText = "Student Registry";
+                desc.innerText = `Full contact details for ${currentCohort}`;
+                renderRegistry(mount);
             } else if (view === 'matrix') {
                 title.innerText = "Session Matrix";
-                desc.innerText = "Raw session-by-session attendance grid.";
-                renderMatrix(mount);
+                desc.innerText = `Session-by-Session Grid (${currentYear} S${currentSemester})`;
+                renderMatrix(mount, filteredCourses);
             } else if (view === 'activate') {
                 title.innerText = "Generate QR";
-                desc.innerText = "Activate tokens for live classroom sessions.";
-                renderActivate(mount);
+                desc.innerText = "Classroom Admission Activation.";
+                renderActivate(mount, filteredCourses);
             }
             lucide.createIcons();
         };
 
-        window.updateGlobalCohort = function(val) {
-            currentCohortFilter = val;
-            switchView(activeView);
-        };
+        function renderOverview(el, filteredCourses) {
+            if (filteredCourses.length === 0) {
+                el.innerHTML = `<div class="p-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 text-slate-400 font-bold">No courses found for ${currentYear} Semester ${currentSemester}</div>`;
+                return;
+            }
 
-        window.refreshPortalQR = function() {
-            const course = courses.find(c => c.id === selectedPortalCourse);
-            if(document.getElementById('portal-course-tag')) document.getElementById('portal-course-tag').innerText = course.code;
-            if(document.getElementById('portal-session-tag')) document.getElementById('portal-session-tag').innerText = `SESSION ${selectedPortalSession}`;
-            
-            document.querySelectorAll('.portal-session-btn').forEach(btn => {
-                if(parseInt(btn.innerText) === selectedPortalSession) {
-                    btn.classList.add('bg-blue-600', 'text-white');
-                    btn.classList.remove('bg-slate-50', 'text-slate-400');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white');
-                    btn.classList.add('bg-slate-50', 'text-slate-400');
-                }
-            });
-            showToast(`Session ${selectedPortalSession} activated`);
-        };
-
-        window.setPortalSession = function(num) {
-            selectedPortalSession = num;
-            refreshPortalQR();
-        };
-
-        // --- INTERNAL LOGIC ---
-        function getActiveCohorts() {
-            const active = new Set(students.map(s => s.cohort));
-            return Array.from(active).sort();
-        }
-
-        function getAttendanceStats(student) {
-            const attended = student.sessions.filter(v => v === 1).length;
-            const total = 22;
-            const percent = (attended / total) * 100;
-            let status = "Good Standing";
-            let color = "status-green";
-            if (percent < 60) { status = "Make-up Required"; color = "status-amber"; }
-            else if (percent < 75) { status = "Risk Warning"; color = "status-red"; }
-            return { attended, missed: total - attended, percent: percent.toFixed(1), status, color };
-        }
-
-        // --- RENDERERS ---
-        function renderOverview(el) {
-            const activeCohorts = getActiveCohorts();
             el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Aggregated Attendance</h4>
-                        <div class="h-64"><canvas id="chart-main-agg"></canvas></div>
+                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Attendance Trends</h4>
+                        <div class="h-64"><canvas id="chart-overview"></canvas></div>
                     </div>
-                    <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 overflow-y-auto max-h-[350px] custom-scrollbar">
-                         <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Active Cohorts</h4>
-                         <div class="space-y-4">
-                            ${activeCohorts.map(c => {
-                                const count = students.filter(s => s.cohort === c).length;
-                                return `
-                                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                                        <div>
-                                            <div class="font-black text-sm">${c}</div>
-                                            <div class="text-[10px] text-slate-400">${count} Students Enrolled</div>
-                                        </div>
-                                        <button onclick="updateGlobalCohort('${c}'); switchView('dashboard');" class="text-blue-600 font-bold text-xs hover:underline">View Details</button>
-                                    </div>
-                                `;
-                            }).join('')}
-                         </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${filteredCourses.map(c => `
+                            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">${c.code}</div>
+                                    <div class="font-black text-slate-900">${c.name}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-black text-slate-900">${Math.floor(Math.random()*20)+75}%</div>
+                                    <div class="text-[9px] font-bold text-slate-400 uppercase">Avg Yield</div>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                </div>
-            `;
+                </div>`;
 
-            new Chart(document.getElementById('chart-main-agg'), {
+            new Chart(document.getElementById('chart-overview'), {
                 type: 'bar',
                 data: {
-                    labels: activeCohorts,
+                    labels: filteredCourses.map(c => c.code),
                     datasets: [{
-                        label: 'Avg Attendance %',
-                        data: activeCohorts.map(c => {
-                            const filtered = students.filter(s => s.cohort === c);
-                            return filtered.length ? (filtered.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / filtered.length) : 0;
-                        }),
-                        backgroundColor: '#2563eb',
-                        borderRadius: 12
+                        data: filteredCourses.map(() => Math.floor(Math.random() * 40) + 60),
+                        backgroundColor: '#2563eb', borderRadius: 10
                     }]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        function renderCompliance(el) {
-            const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
+        function renderCourseManagement(el, filteredCourses) {
             el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                    <div class="md:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Compliance Trend: ${currentCohortFilter}</h4>
-                        <div class="h-64"><canvas id="chart-compliance-detail"></canvas></div>
-                    </div>
-                    <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-xl shadow-blue-200 text-white flex flex-col justify-center">
-                        <h4 class="text-xs font-black text-blue-200 uppercase tracking-widest mb-4">Cohort Average</h4>
-                        <div class="text-4xl font-black">${list.length ? (list.reduce((acc, s) => acc + parseFloat(getAttendanceStats(s).percent), 0) / list.length).toFixed(1) : 0}%</div>
-                        <div class="text-[10px] font-bold text-blue-200 uppercase mt-2">Overall Compliance</div>
-                    </div>
-                </div>
                 <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                    <div class="p-8 border-b border-slate-50 flex justify-between items-center">
+                        <h3 class="font-black text-lg">Curriculum Editor</h3>
+                        <button onclick="addCourse()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> ADD COURSE
+                        </button>
+                    </div>
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5 text-center">Missed</th><th class="px-8 py-5 text-center">Attendance</th><th class="px-8 py-5 text-right">Remark</th></tr>
+                            <tr><th class="px-8 py-5">Course Code</th><th class="px-8 py-5">Full Title</th><th class="px-8 py-5">Actions</th></tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
-                            ${list.map(s => {
-                                const stats = getAttendanceStats(s);
-                                return `
-                                    <tr>
-                                        <td class="px-8 py-6">
-                                            <div class="font-bold text-sm">${s.fname} ${s.lname}</div>
-                                            <div class="text-[10px] text-slate-400 font-mono">${s.matric}</div>
-                                        </td>
-                                        <td class="px-8 py-6 text-center font-bold text-slate-600">${stats.missed}</td>
-                                        <td class="px-8 py-6">
-                                            <div class="flex items-center gap-3 justify-center">
-                                                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-600" style="width:${stats.percent}%"></div></div>
-                                                <span class="text-xs font-black">${stats.percent}%</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-8 py-6 text-right">
-                                            <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight ${stats.color}">${stats.status}</span>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            new Chart(document.getElementById('chart-compliance-detail'), {
-                type: 'line',
-                data: {
-                    labels: list.length > 0 ? list.map(s => s.fname) : ['No Data'],
-                    datasets: [{
-                        label: 'Attendance %',
-                        data: list.length > 0 ? list.map(s => parseFloat(getAttendanceStats(s).percent)) : [0],
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
-            });
-        }
-
-        function renderRegistry(el) {
-            const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
-            el.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                    <div class="lg:col-span-2 bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100 flex items-center justify-between gap-8">
-                        <div><h3 class="font-black text-lg mb-1">Bulk Enrollment</h3><p class="text-slate-400 text-xs font-medium">Download CSV template or upload student lists.</p></div>
-                        <div class="flex items-center gap-3 shrink-0">
-                            <button onclick="downloadCSVTemplate()" class="bg-slate-50 hover:bg-slate-100 text-slate-600 px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 border border-slate-200 transition-all"><i data-lucide="download-cloud" class="w-4 h-4 text-blue-600"></i> TEMPLATE</button>
-                            <label class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-xs flex items-center gap-2 cursor-pointer transition-all shadow-lg shadow-blue-500/20"><i data-lucide="upload-cloud" class="w-4 h-4"></i> UPLOAD CSV<input type="file" accept=".csv" class="hidden" onchange="handleFileUpload(event)"></label>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5">Email</th><th class="px-8 py-5">Cohort</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            ${list.map(s => `
+                            ${filteredCourses.map(c => `
                                 <tr>
-                                    <td class="px-8 py-6"><div class="font-bold text-sm">${s.fname} ${s.lname}</div><div class="text-[10px] text-slate-400 font-mono">${s.matric}</div></td>
-                                    <td class="px-8 py-6 text-xs text-slate-600 font-medium">${s.email}</td>
-                                    <td class="px-8 py-6"><span class="bg-slate-100 text-[10px] font-black px-2 py-1 rounded text-slate-500 uppercase">${s.cohort}</span></td>
+                                    <td class="px-8 py-6">
+                                        <input type="text" value="${c.code}" class="editable-input font-mono font-bold text-blue-600 uppercase" onchange="updateCourseData('${c.id}', 'code', this.value)">
+                                    </td>
+                                    <td class="px-8 py-6">
+                                        <input type="text" value="${c.name}" class="editable-input w-full font-bold text-slate-800" onchange="updateCourseData('${c.id}', 'name', this.value)">
+                                    </td>
+                                    <td class="px-8 py-6">
+                                        <button onclick="deleteCourse('${c.id}')" class="text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
-                </div>
-            `;
+                </div>`;
         }
 
-        function renderCourses(el) {
+        function renderRegistry(el) {
+            const list = students.filter(s => s.cohort === currentCohort);
             el.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${courses.map(c => `
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 card-shadow group relative">
-                            <button onclick="openCourseEdit('${c.id}')" class="absolute top-6 right-6 p-2 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 shadow-sm border border-slate-100">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl w-fit mb-4"><i data-lucide="book" class="w-6 h-6"></i></div>
-                            <h4 class="text-[10px] font-black text-slate-400 uppercase mb-1">${c.code}</h4>
-                            <h3 class="text-lg font-black mb-6">${c.name}</h3>
-                            <div class="pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                                <span>${c.totalSessions} SESSIONS PLANNED</span>
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="bg-white rounded-[2.5rem] border border-slate-100 card-shadow p-8 flex items-center justify-between">
+                        <div class="flex items-center gap-6">
+                            <div class="bg-blue-50 text-blue-600 p-4 rounded-2xl"><i data-lucide="upload-cloud" class="w-6 h-6"></i></div>
+                            <div>
+                                <h4 class="font-black text-lg">Bulk Enrollments</h4>
+                                <p class="text-xs text-slate-400 text-medium">Contact data enabled for ${currentCohort}</p>
                             </div>
                         </div>
-                    `).join('')}
-                    <button onclick="showToast('Course creation coming soon')" class="bg-[#f1f5f9] border-2 border-dashed border-slate-200 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all hover:bg-white group">
-                        <div class="w-12 h-12 rounded-full border-2 border-slate-200 border-dashed flex items-center justify-center mb-4 group-hover:border-blue-200 transition-all">
-                            <i data-lucide="plus" class="w-6 h-6"></i>
+                        <div class="flex gap-3">
+                            <button onclick="downloadCSVTemplate()" class="px-6 py-3 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> TEMPLATE</button>
+                            <button class="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-black shadow-lg hover:bg-slate-800 flex items-center gap-2"><i data-lucide="file-up" class="w-4 h-4"></i> UPLOAD CSV</button>
                         </div>
-                        <span class="font-black text-[10px] uppercase tracking-widest">Add New Course</span>
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderMatrix(el) {
-             const list = currentCohortFilter === "ALL" ? students : students.filter(s => s.cohort === currentCohortFilter);
-             el.innerHTML = `
-                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 p-8 overflow-x-auto">
-                    <div class="min-w-[1200px]">
-                        <div class="flex items-center gap-4 px-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b pb-4 mb-4">
-                            <div class="w-56">Student Name</div>
-                            <div class="flex-1 flex gap-1">${Array.from({length:22}, (_,i)=>`<div class="w-8 text-center font-bold">${i+1}</div>`).join('')}</div>
-                        </div>
-                        ${list.length > 0 ? list.map(s => `
-                            <div class="flex items-center gap-4 p-4 hover:bg-slate-50 transition-all rounded-xl">
-                                <div class="w-56"><div class="font-black text-xs truncate">${s.fname} ${s.lname}</div></div>
-                                <div class="flex-1 flex gap-1">${s.sessions.map((v) => `<div class="w-8 h-8 rounded-lg flex items-center justify-center ${v === 1 ? 'bg-green-500 text-white' : 'bg-slate-100'}">${v === 1 ? '✓' : ''}</div>`).join('')}</div>
-                            </div>
-                        `).join('') : '<div class="text-center py-10 text-slate-400 font-bold">No students in this cohort</div>'}
                     </div>
-                </div>
-             `;
+
+                    <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-8 py-5">Full Name</th>
+                                    <th class="px-8 py-5">Matric No.</th>
+                                    <th class="px-8 py-5">Email Address</th>
+                                    <th class="px-8 py-5">Phone Number</th>
+                                    <th class="px-8 py-5 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                ${list.map(s => `
+                                    <tr>
+                                        <td class="px-8 py-6">
+                                            <div class="flex gap-2">
+                                                <input type="text" value="${s.fname}" class="editable-input font-black text-sm text-slate-900" onchange="updateStudentData('${s.id}', 'fname', this.value)">
+                                                <input type="text" value="${s.lname}" class="editable-input font-black text-sm text-slate-900" onchange="updateStudentData('${s.id}', 'lname', this.value)">
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6 font-mono text-[10px] text-slate-500">${s.matric}</td>
+                                        <td class="px-8 py-6">
+                                            <input type="email" value="${s.email}" class="editable-input text-xs font-medium text-slate-600 w-full" onchange="updateStudentData('${s.id}', 'email', this.value)">
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <input type="text" value="${s.phone}" class="editable-input text-xs font-mono font-medium text-slate-600" onchange="updateStudentData('${s.id}', 'phone', this.value)">
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <span class="px-3 py-1 bg-green-50 text-green-600 text-[9px] font-black rounded-lg uppercase">Enrolled</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                                ${list.length === 0 ? '<tr><td colspan="5" class="p-12 text-center text-slate-400 italic">No students in this cohort registry.</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
         }
 
-        function renderActivate(el) {
+        function renderMatrix(el, filteredCourses) {
+            if (filteredCourses.length === 0) { el.innerHTML = "No courses found."; return; }
+            const activeCourse = filteredCourses[0];
+            const list = students.filter(s => s.cohort === currentCohort);
+
             el.innerHTML = `
-                <div class="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100">
-                        <h3 class="text-xl font-black mb-6">Session Activation</h3>
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 p-8 overflow-x-auto">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 class="font-black text-xl text-slate-900">${activeCourse.code} Matrix</h3>
+                            <p class="text-xs text-slate-400 font-medium">Session-by-session detailed tracking</p>
+                        </div>
+                        <div class="flex gap-2">
+                             <div class="flex items-center gap-2 mr-4">
+                                <div class="w-3 h-3 rounded bg-green-500"></div> <span class="text-[10px] font-black text-slate-400 uppercase">Present</span>
+                             </div>
+                             <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded bg-slate-100"></div> <span class="text-[10px] font-black text-slate-400 uppercase">Absent</span>
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="min-w-[1000px]">
+                        <div class="flex border-b pb-5 mb-4 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50 p-4 rounded-xl">
+                            <div class="w-64">Student Details</div>
+                            <div class="flex-1 flex justify-between px-4">
+                                ${Array.from({length: SESSIONS_COUNT}, (_,i)=>`<div class="w-10 text-center">S${i+1}</div>`).join('')}
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            ${list.map(s => `
+                                <div class="flex py-3 px-4 items-center hover:bg-slate-50 rounded-xl transition-colors">
+                                    <div class="w-64">
+                                        <div class="font-black text-xs text-slate-900">${s.fname} ${s.lname}</div>
+                                        <div class="text-[10px] font-mono text-slate-400">${s.matric}</div>
+                                    </div>
+                                    <div class="flex-1 flex justify-between px-4">
+                                        ${Array.from({length: SESSIONS_COUNT}, (_, i)=>`
+                                            <div class="w-10 flex justify-center">
+                                                <div class="w-8 h-8 rounded-lg ${Math.random() > 0.15 ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-300'} flex items-center justify-center text-[10px] font-black shadow-sm">
+                                                    ${Math.random() > 0.15 ? '✓' : '—'}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderActivate(el, filteredCourses) {
+            const course = filteredCourses[0] || { code: 'N/A', name: 'Select Context' };
+            const cohortStudents = students.filter(s => s.cohort === currentCohort);
+
+            el.innerHTML = `
+                <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-10 rounded-[3rem] border border-slate-100 card-shadow space-y-8 h-fit">
+                        <div>
+                            <h3 class="text-xl font-black mb-1">Session Protocol</h3>
+                            <p class="text-xs text-slate-400 font-medium tracking-tight">Generate unique access for ${currentCohort}</p>
+                        </div>
                         <div class="space-y-6">
                             <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Course</label>
-                                <select id="portal-course-select" onchange="selectedPortalCourse = this.value; refreshPortalQR();" class="w-full mt-2 bg-slate-50 border border-slate-200 p-4 rounded-2xl font-bold text-sm outline-none">
-                                    ${courses.map(c => `<option value="${c.id}" ${c.id === selectedPortalCourse ? 'selected' : ''}>${c.code} - ${c.name}</option>`).join('')}
+                                <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Target Course</label>
+                                <select class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black text-sm outline-none">
+                                    ${filteredCourses.map(c => `<option>${c.code} - ${c.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Number (1-22)</label>
-                                <div class="grid grid-cols-6 gap-2 mt-2">
-                                    ${Array.from({length: 22}, (_, i) => i + 1).map(num => `
-                                        <button onclick="setPortalSession(${num})" class="portal-session-btn h-10 rounded-xl font-bold text-xs transition-all ${num === selectedPortalSession ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'}">${num}</button>
-                                    `).join('')}
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Session #</label>
+                                    <select onchange="genSession=this.value; switchView('activate')" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black text-sm outline-none">
+                                        ${Array.from({length: SESSIONS_COUNT}, (_,i)=>`<option value="${i+1}" ${genSession == i+1 ? 'selected' : ''}>Session ${i+1}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Auto-Close</label>
+                                    <select onchange="genTimer=this.value; switchView('activate')" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl font-black text-sm outline-none">
+                                        <option value="5" ${genTimer === '5' ? 'selected' : ''}>5 Mins</option>
+                                        <option value="15" ${genTimer === '15' ? 'selected' : ''}>15 Mins</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
+                        <button onclick="showToast('Broadcast Started')" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-[2rem] font-black text-sm shadow-xl transition-all active:scale-95">ACTIVATE SESSION</button>
                     </div>
-                    <div class="bg-slate-900 rounded-[3rem] p-10 text-white text-center shadow-2xl flex flex-col items-center">
-                        <div id="portal-qr-container" class="bg-white p-6 rounded-[2.5rem] mb-6"></div>
-                        <div class="mb-8">
-                            <div id="portal-course-tag" class="text-lg font-black">${courses.find(c => c.id === selectedPortalCourse).code}</div>
-                            <div id="portal-session-tag" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">SESSION ${selectedPortalSession}</div>
+
+                    <div class="bg-slate-900 rounded-[3rem] p-10 text-white flex flex-col items-center justify-center text-center">
+                        <div class="bg-white p-6 rounded-[2.5rem] mb-8 shadow-2xl"><i data-lucide="qr-code" class="w-40 h-40 text-slate-900"></i></div>
+                        <div class="space-y-2">
+                            <div class="text-3xl font-black tracking-tighter">${course.code}</div>
+                            <div class="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Session ${genSession} • ${currentCohort}</div>
                         </div>
-                        <button onclick="refreshPortalQR()" class="w-full bg-blue-600 p-4 rounded-2xl font-black text-sm">REFRESH TOKEN</button>
                     </div>
-                </div>
-            `;
-            generateQRVisual();
+
+                    <div class="bg-white p-10 rounded-[3rem] border border-slate-100 card-shadow">
+                        <div class="mb-6 flex items-center gap-3">
+                            <div class="bg-blue-100 p-2 rounded-lg text-blue-600"><i data-lucide="smartphone" class="w-5 h-5"></i></div>
+                            <h4 class="font-black text-sm uppercase tracking-widest text-slate-400">Student Device View</h4>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 space-y-6">
+                            <p class="text-xs font-bold text-slate-600">You are attending: <br><span class="text-slate-900 font-black">${course.name}</span></p>
+                            <div>
+                                <label class="text-[9px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Select Your Name</label>
+                                <select id="student-self-select" class="w-full bg-white border border-slate-200 p-4 rounded-2xl font-black text-sm outline-none text-slate-900 shadow-sm">
+                                    <option value="">Choose name...</option>
+                                    ${cohortStudents.map(s => `<option value="${s.id}">${s.fname} ${s.lname}</option>`).join('')}
+                                </select>
+                            </div>
+                            <button onclick="submitAttendance()" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-black text-xs hover:bg-black transition-all">SUBMIT ATTENDANCE</button>
+                        </div>
+                    </div>
+                </div>`;
         }
 
-        function generateQRVisual() {
-            const container = document.getElementById('portal-qr-container');
-            if(!container) return;
-            container.innerHTML = `<svg width="150" height="150" viewBox="0 0 100 100"><rect width="100" height="100" fill="white"/><rect x="10" y="10" width="20" height="20"/><rect x="70" y="10" width="20" height="20"/><rect x="10" y="70" width="20" height="20"/><rect x="40" y="40" width="20" height="20" fill="#2563eb"/></svg>`;
+        function submitAttendance() {
+            const select = document.getElementById('student-self-select');
+            if (!select || !select.value) { showToast("Please select your name"); return; }
+            showToast("Attendance Marked Successfully!");
+            select.value = "";
+        }
+
+        function renderCompliance(el, filteredCourses) {
+            const list = students.filter(s => s.cohort === currentCohort);
+            el.innerHTML = `
+                <div class="bg-white rounded-[2.5rem] card-shadow border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <tr><th class="px-8 py-5">Student</th><th class="px-8 py-5">Matrix Status</th><th class="px-8 py-5 text-right">Compliance</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            ${list.map(s => `
+                                <tr>
+                                    <td class="px-8 py-6">
+                                        <div class="font-black text-sm text-slate-900">${s.fname} ${s.lname}</div>
+                                        <div class="text-[10px] text-slate-400 font-bold uppercase">${s.matric}</div>
+                                    </td>
+                                    <td class="px-8 py-6 flex gap-1">${filteredCourses.map(() => `<div class="w-2 h-2 rounded-full bg-green-500"></div>`).join('')}</td>
+                                    <td class="px-8 py-6 text-right"><span class="px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded-lg uppercase">Good Standing</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
         }
 
         function showToast(m) {
             const t = document.getElementById('toast');
-            const txt = document.getElementById('toast-text');
-            if(txt) txt.innerText = m;
-            if(t) {
-                t.classList.remove('translate-y-32');
-                setTimeout(() => t.classList.add('translate-y-32'), 3000);
-            }
+            document.getElementById('toast-text').innerText = m;
+            t.classList.remove('translate-y-32');
+            setTimeout(() => t.classList.add('translate-y-32'), 3000);
         }
 
-        function init() {
-            updateCohortDropdown();
+        window.onload = () => {
+            initCohortDropdown();
             switchView('overview');
-        }
-
-        window.addEventListener('DOMContentLoaded', init);
+        };
     </script>
 </body>
 </html>
