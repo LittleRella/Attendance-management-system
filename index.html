@@ -10,20 +10,18 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         
-        /* Animations */
         .fade-in { animation: fadeIn 0.25s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         
         @keyframes scan {
             0%, 100% { transform: translateY(0); opacity: 0.2; }
-            50% { transform: translateY(220px); opacity: 0.8; }
+            50% { transform: translateY(180px); opacity: 0.8; }
         }
         .scan-line {
             animation: scan 3s infinite ease-in-out;
             box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5);
         }
         
-        /* Custom UI Elements */
         .sidebar-item-active { background-color: #2563eb; color: white; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
         .session-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
         .present { background-color: #10b981; }
@@ -33,7 +31,21 @@
         .modal-blur { background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        input::placeholder { color: #cbd5e1; font-weight: 500; }
+        
+        /* Custom Select Styling */
+        .sim-input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .sim-input:focus { border-color: #3b82f6; background: rgba(255,255,255,0.1); }
+        .sim-label { color: #94a3b8; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
@@ -45,7 +57,7 @@
                 <div class="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
-                <h1 class="font-black text-2xl tracking-tighter">ATTENDX</h1>
+                <h1 class="font-black text-2xl tracking-tighter text-white">ATTENDX</h1>
             </div>
             
             <nav class="space-y-2 flex-1">
@@ -65,7 +77,7 @@
 
             <div class="mt-auto">
                 <button onclick="switchView('activate')" id="nav-activate" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-[1.5rem] font-black text-sm tracking-wide shadow-xl shadow-blue-900/40 flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
-                    <i data-lucide="qr-code" class="w-5 h-5"></i> ACTIVATE SIM
+                    <i data-lucide="smartphone" class="w-5 h-5"></i> ACTIVATE SIM
                 </button>
             </div>
         </aside>
@@ -80,7 +92,7 @@
                 
                 <div id="header-filter-area" class="flex items-center gap-4">
                     <div class="text-right">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Global Filter</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-white">Global Filter</p>
                         <select id="global-cohort-filter" onchange="refreshView()" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold shadow-sm outline-none focus:ring-2 ring-blue-500/20 cursor-pointer">
                             <option value="ALL">All Cohorts</option>
                         </select>
@@ -92,7 +104,7 @@
         </main>
     </div>
 
-    <!-- Modals & Overlays -->
+    <!-- Modals -->
     <div id="confirm-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6">
         <div class="absolute inset-0 modal-blur" onclick="closeConfirmModal()"></div>
         <div class="relative w-full max-w-sm bg-white p-10 rounded-[3rem] card-shadow text-center">
@@ -118,28 +130,19 @@
         // --- Core Application State ---
         let courses = [
             { id: 'c1', code: 'CSC101', name: 'Intro to Programming' },
-            { id: 'c2', code: 'PHY201', name: 'General Physics II' },
-            { id: 'c3', code: 'BE', name: 'Business Ethics' },
-            { id: 'c4', code: 'NHB', name: 'Nature of Human Beings' }
+            { id: 'c2', code: 'PHY201', name: 'General Physics II' }
         ];
 
         let students = [
             { id: 's1', matric: '24/CSC/001', fname: 'Faith', lname: 'Okon', email: 'faith@uni.edu', phone: '0801', course: 'CSC101', cohort: 'MMBA 10', sessions: Array(22).fill(0) },
-            { id: 's2', matric: '24/BE/012', fname: 'Bello', lname: 'Ibrahim', email: 'bello@uni.edu', phone: '0812', course: 'BE', cohort: 'MMBA 11', sessions: Array(22).fill(0).map((_,i) => i < 5 ? 1 : 0) }
+            { id: 's2', matric: '24/BE/012', fname: 'Bello', lname: 'Ibrahim', email: 'bello@uni.edu', phone: '0812', course: 'CSC101', cohort: 'MMBA 10', sessions: Array(22).fill(0) }
         ];
 
-        const cohorts = [
-            "MMBA 6", "MMBA 7", "MMBA 8", "MMBA 9", "MMBA 10", "MMBA 11", "MMBA 12", "MMBA 13", "MMBA 14",
-            "EMBA 30", "EMBA 31", "EMBA 32", "EMBA 33", "EMBA 34"
-        ];
-
+        const cohorts = ["MMBA 10", "MMBA 11", "EMBA 30"];
         let activeView = 'dashboard';
-        let editingId = null;
 
-        // --- View Logic ---
         function switchView(view) {
             activeView = view;
-            editingId = null;
             const mount = document.getElementById('view-mount');
             const title = document.getElementById('view-title');
             const desc = document.getElementById('view-desc');
@@ -152,16 +155,16 @@
                 title.innerText = "Dashboard"; desc.innerText = "Monitoring academic compliance.";
                 renderDashboard(mount);
             } else if (view === 'registry') {
-                title.innerText = "Registry"; desc.innerText = "Manage student information and enrollments.";
+                title.innerText = "Registry"; desc.innerText = "Manage student information.";
                 renderRegistry(mount);
             } else if (view === 'courses') {
-                title.innerText = "Course Management"; desc.innerText = "Add, edit, or remove academic modules.";
+                title.innerText = "Course Management"; desc.innerText = "Manage academic modules.";
                 renderCourses(mount);
             } else if (view === 'matrix') {
-                title.innerText = "Session Matrix"; desc.innerText = "Visual grid of all 22 sessions.";
+                title.innerText = "Session Matrix"; desc.innerText = "Attendance history grid.";
                 renderMatrix(mount);
             } else if (view === 'activate') {
-                title.innerText = "Student Simulator"; desc.innerText = "Preview the student mobile scanning experience.";
+                title.innerText = "Student Simulator"; desc.innerText = "Simulate a mobile attendance scan.";
                 renderActivate(mount);
             }
             lucide.createIcons();
@@ -170,134 +173,51 @@
         function refreshView() { switchView(activeView); }
 
         function renderDashboard(el) {
-            const cohort = document.getElementById('global-cohort-filter').value;
-            const list = cohort === 'ALL' ? students : students.filter(s => s.cohort === cohort);
-            const presentCount = list.reduce((acc, s) => acc + s.sessions.filter(v => v === 1).length, 0);
-            const rate = list.length ? (presentCount / (list.length * 22) * 100).toFixed(1) : 0;
+            const list = students;
+            const totalSlots = list.length * 22;
+            const presentSlots = list.reduce((acc, s) => acc + s.sessions.filter(v => v === 1).length, 0);
+            const rate = totalSlots ? (presentSlots / totalSlots * 100).toFixed(1) : 0;
 
             el.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                     <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Compliance</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Compliance</p>
                         <h4 class="text-4xl font-black text-blue-600">${rate}%</h4>
-                        <div class="h-1.5 w-full bg-slate-100 rounded-full mt-4"><div class="h-full bg-blue-600 rounded-full" style="width:${rate}%"></div></div>
                     </div>
                     <div class="bg-white p-8 rounded-[2.5rem] card-shadow border border-slate-100">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Students</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Students</p>
                         <h4 class="text-4xl font-black text-slate-900">${list.length}</h4>
                     </div>
                 </div>
             `;
         }
 
-        function renderCourses(el) {
-            el.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100 h-fit sticky top-10">
-                        <h5 id="form-title" class="font-black text-lg mb-8 text-slate-800">Manage Module</h5>
-                        <div class="space-y-4">
-                            <input id="c-code" placeholder="Course Code" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
-                            <input id="c-name" placeholder="Course Title" class="w-full bg-slate-50 border-2 border-slate-50 rounded-2xl p-5 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
-                            <button onclick="saveCourse()" id="save-btn" class="w-full bg-[#0b0f1a] text-white py-5 rounded-2xl font-black text-sm tracking-wide hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 mt-2">Add Course</button>
-                            <button onclick="refreshView()" id="cancel-btn" class="w-full hidden text-slate-400 font-bold text-xs py-2 hover:text-slate-600 transition-all">Cancel Edit</button>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2 bg-white rounded-[3rem] card-shadow border border-slate-100 overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <tr><th class="px-8 py-6">Code</th><th class="px-8 py-6">Name</th><th class="px-8 py-6 text-right">Actions</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                ${courses.map(c => `
-                                    <tr class="group hover:bg-slate-50/40 transition-all">
-                                        <td class="px-8 py-6 font-black text-blue-600 text-sm">${c.code}</td>
-                                        <td class="px-8 py-6 font-bold text-slate-600 text-sm">${c.name}</td>
-                                        <td class="px-8 py-6 text-right space-x-2">
-                                            <button onclick="editCourse('${c.id}')" class="p-2.5 text-slate-200 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                                            <button onclick="reqDelete('course', '${c.id}')" class="p-2.5 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-        }
-
         function renderRegistry(el) {
-            const cohort = document.getElementById('global-cohort-filter').value;
-            const list = cohort === 'ALL' ? students : students.filter(s => s.cohort === cohort);
             el.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div class="lg:col-span-4 space-y-8">
-                        <div class="bg-white p-10 rounded-[3rem] card-shadow border border-slate-100">
-                            <h5 id="stu-form-title" class="font-black text-lg mb-8 text-slate-800">Enroll Student</h5>
-                            <div class="space-y-3">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <input id="s-fname" placeholder="First Name" class="bg-slate-50 border border-slate-50 rounded-xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-blue-500 transition-all">
-                                    <input id="s-lname" placeholder="Last Name" class="bg-slate-50 border border-slate-50 rounded-xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-blue-500 transition-all">
-                                </div>
-                                <input id="s-matric" placeholder="Matric" class="w-full bg-slate-50 border border-slate-50 rounded-xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-blue-500 transition-all">
-                                <select id="s-cohort" class="w-full bg-slate-50 border border-slate-50 rounded-xl p-4 text-xs font-bold outline-none cursor-pointer">
-                                    <option value="">Select Cohort</option>
-                                    ${cohorts.map(c => `<option value="${c}">${c}</option>`).join('')}
-                                </select>
-                                <select id="s-course" class="w-full bg-slate-50 border border-slate-50 rounded-xl p-4 text-xs font-bold outline-none cursor-pointer">
-                                    ${courses.map(c => `<option value="${c.code}">${c.code} - ${c.name}</option>`).join('')}
-                                </select>
-                                <button onclick="saveStudent()" id="stu-save-btn" class="w-full bg-[#0b0f1a] text-white py-4 rounded-xl font-black text-xs tracking-wider hover:bg-blue-600 transition-all mt-4">Enroll Student</button>
-                                <button onclick="refreshView()" id="stu-cancel-btn" class="w-full hidden text-slate-400 font-bold text-[10px] py-1">Cancel Edit</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lg:col-span-8 bg-white rounded-[3rem] card-shadow border border-slate-100 overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <tr><th class="px-8 py-6">Student</th><th class="px-8 py-6">Matric</th><th class="px-8 py-6">Course</th><th class="px-8 py-6 text-right">Actions</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-50">
-                                ${list.map(s => `
-                                    <tr class="group hover:bg-slate-50/40">
-                                        <td class="px-8 py-6">
-                                            <p class="font-black text-sm text-slate-900">${s.fname} ${s.lname}</p>
-                                            <p class="text-[10px] font-bold text-slate-400">${s.cohort}</p>
-                                        </td>
-                                        <td class="px-8 py-6 font-mono text-xs font-bold text-slate-400">${s.matric}</td>
-                                        <td class="px-8 py-6"><span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black">${s.course}</span></td>
-                                        <td class="px-8 py-6 text-right space-x-1">
-                                            <button onclick="editStudent('${s.id}')" class="p-2.5 text-slate-200 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                                            <button onclick="reqDelete('student', '${s.id}')" class="p-2.5 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="bg-white rounded-[3rem] card-shadow border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <tr><th class="px-8 py-6">Student</th><th class="px-8 py-6 text-right">Actions</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            ${students.map(s => `<tr><td class="px-8 py-6 font-bold text-sm">${s.fname} ${s.lname}</td><td class="px-8 py-6 text-right"><button onclick="reqDelete('s','${s.id}')" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `;
-            lucide.createIcons();
         }
+
+        function renderCourses(el) { el.innerHTML = `<div class="p-10 text-slate-400 font-bold">Course Management Content...</div>`; }
 
         function renderMatrix(el) {
-            const cohort = document.getElementById('global-cohort-filter').value;
-            const list = cohort === 'ALL' ? students : students.filter(s => s.cohort === cohort);
             el.innerHTML = `
                 <div class="bg-white rounded-[3rem] card-shadow border border-slate-100 p-10 overflow-x-auto">
-                    <div class="min-w-[800px] space-y-3">
-                        ${list.map(s => `
-                            <div class="flex items-center gap-6 p-5 bg-slate-50/50 rounded-3xl border border-transparent hover:border-slate-100 hover:bg-white transition-all group">
-                                <div class="w-64">
-                                    <p class="font-black text-slate-800 text-sm truncate">${s.fname} ${s.lname}</p>
-                                    <p class="text-[9px] font-black text-blue-500 uppercase tracking-tight">${s.matric} • ${s.course}</p>
-                                </div>
-                                <div class="flex-1 flex gap-2 overflow-x-auto no-scrollbar py-1">
-                                    ${s.sessions.map((v, i) => `<div class="session-dot ${v === 1 ? 'present' : 'absent'}" title="Session ${i+1}"></div>`).join('')}
-                                </div>
-                                <div class="text-[10px] font-black text-slate-400 group-hover:text-blue-600 transition-colors">
-                                    ${Math.round((s.sessions.filter(x => x === 1).length / 22) * 100)}%
+                    <div class="min-w-[800px] space-y-2">
+                        ${students.map(s => `
+                            <div class="flex items-center gap-6 p-4 bg-slate-50/50 rounded-2xl">
+                                <div class="w-48 font-black text-xs truncate">${s.fname} ${s.lname}</div>
+                                <div class="flex-1 flex gap-1.5">
+                                    ${s.sessions.map((v, i) => `<div class="w-3 h-3 rounded-sm ${v === 1 ? 'present' : 'absent'}"></div>`).join('')}
                                 </div>
                             </div>
                         `).join('')}
@@ -308,110 +228,85 @@
 
         function renderActivate(el) {
             el.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-10">
-                    <!-- Mobile Simulator Frame -->
+                <div class="flex flex-col items-center py-6">
                     <div class="w-[340px] h-[680px] bg-slate-900 rounded-[3.5rem] border-[12px] border-slate-800 shadow-2xl overflow-hidden relative p-4 flex flex-col">
-                        <!-- Phone Header -->
                         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
                         
-                        <div class="flex-1 bg-black rounded-[2.5rem] overflow-hidden relative flex flex-col items-center justify-center p-8 text-center text-white">
-                            <!-- Scanning Environment Mockup -->
-                            <div class="absolute inset-0 opacity-20 bg-gradient-to-br from-blue-900 via-transparent to-purple-900"></div>
-                            
-                            <!-- Scanner Visual -->
-                            <div class="w-full aspect-square border-2 border-blue-500/30 rounded-3xl mb-10 flex items-center justify-center relative bg-slate-900/40">
-                                <!-- Corners -->
-                                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 -mt-1 -ml-1 rounded-tl-lg"></div>
-                                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 -mt-1 -mr-1 rounded-tr-lg"></div>
-                                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 -mb-1 -ml-1 rounded-bl-lg"></div>
-                                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 -mb-1 -mr-1 rounded-br-lg"></div>
-                                
-                                <i data-lucide="qr-code" class="w-32 h-32 text-blue-500/10"></i>
-                                
-                                <!-- Animated Scan Line -->
-                                <div class="absolute inset-x-4 h-1 bg-blue-400/80 scan-line top-4"></div>
+                        <div class="flex-1 bg-[#0b0f1a] rounded-[2.5rem] overflow-hidden relative flex flex-col p-6 text-white">
+                            <div class="mt-8 mb-6">
+                                <h3 class="text-xl font-black">Attendance SIM</h3>
+                                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Session Active: EMBA 10</p>
                             </div>
 
-                            <div class="relative z-10">
-                                <h4 class="text-xl font-black mb-2">Ready to Scan</h4>
-                                <p class="text-slate-400 text-xs leading-relaxed mb-12 px-2">Align the QR code on the lecture screen within the frame to record your attendance.</p>
-                                
-                                <button onclick="simulateScan()" class="w-full py-5 bg-blue-600 text-white rounded-[1.5rem] font-black text-sm tracking-wider shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
-                                    SIMULATE SCAN
-                                </button>
-                                
-                                <p class="mt-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Device ID: ATTNDX-7742</p>
+                            <div class="space-y-5 mb-8">
+                                <div>
+                                    <label class="sim-label">1. Session Type</label>
+                                    <div class="flex gap-2">
+                                        <button onclick="setSimType('Physical')" id="type-Physical" class="flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold transition-all bg-blue-600 text-white">Physical</button>
+                                        <button onclick="setSimType('Virtual')" id="type-Virtual" class="flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold transition-all bg-white/5 text-slate-400">Virtual</button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="sim-label">2. Select Student</label>
+                                    <select id="sim-student-id" class="sim-input cursor-pointer">
+                                        <option value="">-- Choose Student --</option>
+                                        ${students.map(s => `<option value="${s.id}">${s.fname} ${s.lname} (${s.matric})</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="sim-label">3. Session Number</label>
+                                    <select id="sim-session-num" class="sim-input">
+                                        ${Array.from({length:22}, (_,i)=>`<option value="${i}">Session ${i+1}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
+
+                            <div class="w-full aspect-square border border-blue-500/20 rounded-2xl mb-8 flex items-center justify-center relative bg-white/[0.02]">
+                                <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-blue-500/50 -mt-1 -ml-1"></div>
+                                <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-blue-500/50 -mt-1 -mr-1"></div>
+                                <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-blue-500/50 -mb-1 -ml-1"></div>
+                                <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-blue-500/50 -mb-1 -mr-1"></div>
+                                <div class="absolute inset-x-4 h-[1px] bg-blue-400 scan-line"></div>
+                                <i data-lucide="scan" class="w-12 h-12 text-white/5"></i>
+                            </div>
+
+                            <button onclick="processSimScan()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm tracking-wider shadow-lg shadow-blue-900 active:scale-95 transition-all">
+                                SUBMIT ATTENDANCE
+                            </button>
+                            
+                            <p class="mt-4 text-[9px] text-center font-bold text-slate-600 tracking-[0.2em]">SECURE SCAN SYSTEM v2.0</p>
                         </div>
-                    </div>
-                    
-                    <div class="mt-12 text-center max-w-sm">
-                        <h4 class="font-black text-slate-800 mb-2">Simulation Mode</h4>
-                        <p class="text-slate-500 text-sm leading-relaxed">This view provides a real-time preview of how students will interact with the system on their mobile devices.</p>
                     </div>
                 </div>
             `;
             lucide.createIcons();
         }
 
-        function simulateScan() {
-            showToast("Success! Student 'Faith Okon' verified.");
-            setTimeout(() => switchView('dashboard'), 1500);
+        let currentSimType = 'Physical';
+        function setSimType(type) {
+            currentSimType = type;
+            document.querySelectorAll('[id^="type-"]').forEach(btn => {
+                btn.className = "flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold transition-all bg-white/5 text-slate-400";
+            });
+            const active = document.getElementById(`type-${type}`);
+            active.className = "flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold transition-all bg-blue-600 text-white";
         }
 
-        function saveCourse() {
-            const code = document.getElementById('c-code').value.trim().toUpperCase();
-            const name = document.getElementById('c-name').value.trim();
-            if (!code || !name) return showToast("Required fields missing");
-            if (editingId) {
-                const idx = courses.findIndex(c => c.id === editingId);
-                courses[idx] = { ...courses[idx], code, name };
-                showToast("Course updated");
-            } else {
-                courses.push({ id: 'c' + Date.now(), code, name });
-                showToast("Course added");
+        function processSimScan() {
+            const stuId = document.getElementById('sim-student-id').value;
+            const sessionIdx = parseInt(document.getElementById('sim-session-num').value);
+            
+            if (!stuId) return showToast("Please select a student first");
+
+            const student = students.find(s => s.id === stuId);
+            if (student) {
+                student.sessions[sessionIdx] = 1;
+                showToast(`Verified: ${student.fname} for ${currentSimType} session ${sessionIdx+1}`);
+                setTimeout(() => switchView('matrix'), 1000);
             }
-            refreshView();
         }
-
-        function editCourse(id) {
-            const c = courses.find(x => x.id === id);
-            editingId = id;
-            document.getElementById('c-code').value = c.code;
-            document.getElementById('c-name').value = c.name;
-            document.getElementById('save-btn').innerText = "Update Course";
-            document.getElementById('form-title').innerText = "Edit Module";
-            document.getElementById('cancel-btn').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function saveStudent() {
-            const fname = document.getElementById('s-fname').value.trim();
-            const lname = document.getElementById('s-lname').value.trim();
-            const matric = document.getElementById('s-matric').value.trim().toUpperCase();
-            const cohort = document.getElementById('s-cohort').value;
-            const course = document.getElementById('s-course').value;
-            if (!fname || !lname || !matric || !cohort || !course) return showToast("Required fields missing");
-            students.push({ id: 's' + Date.now(), matric, fname, lname, cohort, course, sessions: Array(22).fill(0) });
-            showToast("Student enrolled");
-            refreshView();
-        }
-
-        let deleteRef = null;
-        function reqDelete(type, id) {
-            deleteRef = { type, id };
-            document.getElementById('confirm-modal').classList.remove('hidden');
-        }
-
-        function closeConfirmModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
-
-        document.getElementById('modal-confirm-btn').onclick = () => {
-            if (deleteRef.type === 'course') courses = courses.filter(c => c.id !== deleteRef.id);
-            else students = students.filter(s => s.id !== deleteRef.id);
-            showToast("Record deleted");
-            closeConfirmModal();
-            refreshView();
-        };
 
         function showToast(m) {
             const t = document.getElementById('toast');
@@ -420,15 +315,17 @@
             setTimeout(() => t.classList.add('translate-y-32'), 3000);
         }
 
-        function init() {
-            const filter = document.getElementById('global-cohort-filter');
-            cohorts.forEach(c => {
-                const o = document.createElement('option'); o.value = c; o.innerText = c;
-                filter.appendChild(o);
-            });
-            switchView('dashboard');
+        function reqDelete(type, id) {
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('modal-confirm-btn').onclick = () => {
+                students = students.filter(s => s.id !== id);
+                refreshView();
+                closeConfirmModal();
+            };
         }
+        function closeConfirmModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
 
+        function init() { switchView('dashboard'); }
         init();
     </script>
 </body>
