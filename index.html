@@ -1,512 +1,286 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Advanced Attendance Analytics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            scroll-behavior: smooth;
-        }
-        
-        [x-cloak] { display: none !important; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        
-        .sidebar-item-active {
-            background: #2563eb !important;
-            color: white !important;
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
-        }
+import React, { useState, useEffect } from 'react';
+import { 
+  Users, 
+  Calendar, 
+  Upload, 
+  Download, 
+  Settings, 
+  Plus, 
+  Search, 
+  ChevronRight, 
+  MoreVertical,
+  AlertCircle,
+  CheckCircle2,
+  FileText
+} from 'lucide-react';
 
-        .bar-anim {
-            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+const App = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [semesters, setSemesters] = useState('2');
+  const [durationYears, setDurationYears] = useState('4');
+  const [uploadStatus, setUploadStatus] = useState(null);
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+  // Mock CSV Data for Template
+  const csvTemplate = "Full Name,Matric Number,Email,Level,Department\nJohn Doe,U2024/001,john@example.com,100,Computer Science\nJane Smith,U2024/002,jane@example.com,100,Computer Science";
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+  const downloadCSVTemplate = () => {
+    const blob = new Blob([csvTemplate], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'attendx_enrollment_template.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
-        .animate-view {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-    </style>
-</head>
-<body class="bg-[#f8fafc] text-[#1e293b] overflow-x-hidden" x-data="attendX()">
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadStatus('processing');
+      // Simulate processing delay
+      setTimeout(() => {
+        setUploadStatus('success');
+        setTimeout(() => setUploadStatus(null), 3000);
+      }, 1500);
+    }
+  };
 
-    <!-- Sidebar -->
-    <aside class="w-[280px] bg-[#0f172a] text-white fixed h-full flex flex-col z-50 transition-all duration-300">
-        <div class="p-8 flex items-center gap-3">
-            <div class="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </div>
-            <h1 class="font-extrabold text-2xl tracking-tighter uppercase">ATTENDX</h1>
+  return (
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-indigo-600 tracking-tight flex items-center gap-2">
+            <CheckCircle2 className="w-8 h-8" /> AttendX
+          </h1>
         </div>
         
-        <nav class="flex-1 px-4 space-y-1.5 mt-4">
-            <template x-for="item in menuItems" :key="item.id">
-                <button 
-                    @click="activeView = item.id; selectedStudent = null"
-                    :class="activeView === item.id && !selectedStudent ? 'sidebar-item-active' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
-                    class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-sm text-left group"
-                >
-                    <span class="transition-transform group-hover:scale-110" x-html="item.icon"></span>
-                    <span x-text="item.label"></span>
-                </button>
-            </template>
+        <nav className="flex-1 px-4 space-y-1">
+          {[
+            { id: 'dashboard', icon: Calendar, label: 'Sessions' },
+            { id: 'students', icon: Users, label: 'Students' },
+            { id: 'reports', icon: FileText, label: 'Reports' },
+            { id: 'settings', icon: Settings, label: 'System Settings' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === item.id 
+                  ? 'bg-indigo-50 text-indigo-700 font-medium' 
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <item.icon size={20} />
+              {item.label}
+            </button>
+          ))}
         </nav>
+      </aside>
 
-        <!-- Bottom Actions -->
-        <div class="px-6 mb-8">
-            <div class="bg-[#1e293b] p-6 rounded-[2.5rem] border border-white/5">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Status</p>
-                        <p class="text-[11px] font-bold text-emerald-400 mt-0.5 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                            Live Monitoring
-                        </p>
-                    </div>
-                </div>
-                <button 
-                    @click="activeView = 'activate'; selectedStudent = null"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
-                    GENERATE QR
-                </button>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold">Attendance Management</h2>
+          <div className="flex items-center gap-4">
+            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full">
+              <Search size={20} />
+            </button>
+            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+              AD
             </div>
-        </div>
-    </aside>
+          </div>
+        </header>
 
-    <!-- Main Content Area -->
-    <main class="ml-[280px] p-10 min-h-screen">
-        
-        <!-- View Header -->
-        <div x-show="!selectedStudent" class="flex justify-between items-start mb-12 animate-view">
+        <div className="p-8 max-w-6xl mx-auto">
+          {/* Action Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight" x-text="getViewTitle()"></h2>
-                <p class="text-slate-500 font-medium mt-1">Real-time engagement tracking and analytics.</p>
+              <h3 className="text-2xl font-bold">Manage Enrollment</h3>
+              <p className="text-slate-500">Configure academic sessions and enroll students</p>
             </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={downloadCSVTemplate}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm"
+              >
+                <Download size={18} /> Download Template
+              </button>
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-md shadow-indigo-100"
+              >
+                <Plus size={18} /> New Session
+              </button>
+            </div>
+          </div>
+
+          {/* Session Configuration Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8">
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Current Session Settings</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Academic Start Date</label>
+                <input 
+                  type="date" 
+                  value={sessionDate}
+                  onChange={(e) => setSessionDate(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Semesters per Session</label>
+                <select 
+                  value={semesters}
+                  onChange={(e) => setSemesters(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                >
+                  <option value="1">1 Semester</option>
+                  <option value="2">2 Semesters</option>
+                  <option value="3">3 Semesters (Trimester)</option>
+                  <option value="4">4 Semesters (Quarterly)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Duration (Years)</label>
+                <select 
+                  value={durationYears}
+                  onChange={(e) => setDurationYears(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                >
+                  {[1, 2, 3, 4, 5, 6].map(year => (
+                    <option key={year} value={year}>{year} {year === 1 ? 'Year' : 'Years'}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk Upload Section */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 flex flex-col items-center justify-center border-dashed border-2 bg-indigo-50/20">
+            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+              <Upload size={32} />
+            </div>
+            <h4 className="text-lg font-semibold mb-2">Bulk Enroll Students</h4>
+            <p className="text-slate-500 text-center max-w-sm mb-6">
+              Upload a CSV file containing student details. Use the template provided above for the correct format.
+            </p>
             
-            <div class="flex gap-4 items-center">
-                <div class="bg-white px-6 py-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Date</span>
-                    <span class="text-sm font-bold">Apr 19, 2026</span>
-                </div>
-                <div class="bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 group cursor-pointer hover:border-blue-200 transition-colors">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter</span>
-                    <select class="text-sm font-bold text-blue-600 bg-transparent border-none outline-none appearance-none cursor-pointer">
-                        <option>Current Semester</option>
-                        <option>Full Year</option>
-                    </select>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="m6 9 6 6 6-6"/></svg>
-                </div>
+            <label className={`
+              cursor-pointer flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all
+              ${uploadStatus === 'processing' ? 'bg-slate-200 text-slate-500' : 
+                uploadStatus === 'success' ? 'bg-green-600 text-white' : 
+                'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100'}
+            `}>
+              <Upload size={20} />
+              {uploadStatus === 'processing' ? 'Processing File...' : 
+               uploadStatus === 'success' ? 'Upload Successful!' : 'Upload CSV File'}
+              <input 
+                type="file" 
+                accept=".csv" 
+                className="hidden" 
+                onChange={handleFileUpload}
+                disabled={uploadStatus === 'processing'}
+              />
+            </label>
+
+            {uploadStatus === 'success' && (
+              <div className="mt-4 flex items-center gap-2 text-green-600 text-sm animate-bounce">
+                <CheckCircle2 size={16} /> 245 students successfully enrolled.
+              </div>
+            )}
+          </div>
+
+          {/* Recent Activity Table */}
+          <div className="mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h4 className="font-bold">Recent Sessions</h4>
+              <button className="text-indigo-600 text-sm font-medium hover:underline">View All</button>
             </div>
-        </div>
-
-        <!-- VIEW: Overview -->
-        <div x-show="activeView === 'overview' && !selectedStudent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-view">
-            <template x-for="cohort in cohorts" :key="cohort.name">
-                <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h4 class="text-xl font-extrabold text-slate-800" x-text="cohort.name"></h4>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Cohort Performance</p>
-                        </div>
-                        <span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-widest">Active</span>
-                    </div>
-                    
-                    <div class="flex items-end justify-between h-32 gap-3 mb-8 px-2">
-                        <template x-for="h in cohort.bars">
-                            <div class="flex-1 bg-slate-100 rounded-lg relative overflow-hidden h-full group/bar">
-                                <div class="absolute bottom-0 left-0 right-0 bg-blue-600 rounded-lg transition-all duration-1000 ease-out group-hover:bg-blue-500" :style="'height: ' + h + '%'"></div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <div class="pt-8 border-t border-slate-50 flex items-end justify-between">
-                        <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. Attendance</p>
-                            <p class="text-4xl font-extrabold mt-1 text-slate-900" x-text="cohort.avg + '%'"></p>
-                        </div>
-                        <div class="w-12 h-12 rounded-full border-4 border-slate-100 flex items-center justify-center text-[10px] font-black text-blue-600" :style="'background: conic-gradient(#2563eb ' + cohort.avg + '%, transparent 0)'">
-                            <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center" x-text="cohort.avg"></div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <!-- VIEW: Courses -->
-        <div x-show="activeView === 'courses'" class="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm animate-view">
-            <div class="flex justify-between items-center mb-10">
-                <h3 class="text-2xl font-extrabold">Active Curriculum</h3>
-                <button @click="editingCourse = {id: Date.now(), name: '', code: ''}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">+ New Course</button>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4">Session Name</th>
+                    <th className="px-6 py-4">Start Date</th>
+                    <th className="px-6 py-4">Duration</th>
+                    <th className="px-6 py-4">Students</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[
+                    { name: '2023/2024 Academic', date: '2023-09-15', duration: '4 Years', students: 1240, status: 'Active' },
+                    { name: '2022/2023 Academic', date: '2022-09-12', duration: '4 Years', students: 1100, status: 'Closed' }
+                  ].map((session, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-medium">{session.name}</td>
+                      <td className="px-6 py-4 text-slate-500">{session.date}</td>
+                      <td className="px-6 py-4 text-slate-500">{session.duration}</td>
+                      <td className="px-6 py-4 text-slate-500">{session.students}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          session.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {session.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button className="text-slate-400 hover:text-indigo-600">
+                          <MoreVertical size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <template x-for="course in courses" :key="course.id">
-                    <div class="flex items-center justify-between p-8 bg-slate-50/50 rounded-3xl border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-xl transition-all group">
-                        <div class="flex items-center gap-6">
-                            <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-                                <span class="font-black text-sm" x-text="course.code.substring(0,3)"></span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest" x-text="course.code"></span>
-                                <h4 class="font-extrabold text-lg text-slate-800" x-text="course.name"></h4>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click="editingCourse = {...course}" class="p-3 bg-white text-slate-400 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-                            <button @click="deleteCourse(course.id)" class="p-3 bg-white text-slate-400 hover:text-red-600 rounded-xl shadow-sm border border-slate-100 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-                        </div>
-                    </div>
-                </template>
-            </div>
+          </div>
         </div>
+      </main>
 
-        <!-- VIEW: Registry -->
-        <div x-show="activeView === 'registry' && !selectedStudent" class="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden animate-view">
-            <div class="p-10 flex justify-between items-center border-b border-slate-50 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+      {/* Simple Modal Overlay */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-xl font-bold">Initialize New Session</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Session Label</label>
+                <input type="text" placeholder="e.g. 2024/2025 Regular" className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <h3 class="font-extrabold text-2xl">Student Directory</h3>
-                    <p class="text-xs font-bold text-slate-400 mt-1" x-text="students.length + ' students enrolled'"></p>
+                  <label className="block text-sm font-medium mb-1">Start Date</label>
+                  <input type="date" className="w-full px-4 py-2 border rounded-lg text-sm" />
                 </div>
-                <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: 'MMBA 10', yield: 100}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                    + Add Student
-                </button>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Semesters</label>
+                  <select className="w-full px-4 py-2 border rounded-lg text-sm">
+                    <option>1</option>
+                    <option selected>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        <tr>
-                            <th class="px-10 py-6">Identity</th>
-                            <th class="px-10 py-6">Matric Number</th>
-                            <th class="px-10 py-6">Active Cohort</th>
-                            <th class="px-10 py-6 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        <template x-for="s in students" :key="s.id">
-                            <tr class="hover:bg-blue-50/30 transition-all group">
-                                <td class="px-10 py-6">
-                                    <button @click="selectedStudent = s" class="flex items-center gap-4 group/btn outline-none">
-                                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-sm group-hover/btn:bg-blue-600 group-hover/btn:text-white transition-all shadow-sm" x-text="s.fname[0] + s.lname[0]"></div>
-                                        <div class="text-left">
-                                            <div class="font-bold text-slate-900 group-hover/btn:text-blue-600" x-text="s.fname + ' ' + s.lname"></div>
-                                            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">View Profile</div>
-                                        </div>
-                                    </button>
-                                </td>
-                                <td class="px-10 py-6">
-                                    <span class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 font-mono tracking-tighter" x-text="s.matric"></span>
-                                </td>
-                                <td class="px-10 py-6">
-                                    <span class="text-sm font-bold text-slate-600" x-text="s.cohort"></span>
-                                </td>
-                                <td class="px-10 py-6 text-right">
-                                    <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button @click="editingStudent = {...s}" class="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-                                        <button @click="deleteStudent(s.id)" class="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+            <div className="p-6 border-t border-slate-100 flex gap-3 justify-end">
+              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">Cancel</button>
+              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Create Session</button>
             </div>
+          </div>
         </div>
+      )}
+    </div>
+  );
+};
 
-        <!-- VIEW: Matrix -->
-        <div x-show="activeView === 'matrix'" class="bg-white rounded-[3.5rem] shadow-sm border border-slate-100 overflow-hidden animate-view">
-            <div class="p-10 border-b border-slate-50 flex justify-between items-center">
-                <h3 class="font-extrabold text-2xl">Session Matrix</h3>
-                <div class="flex gap-2">
-                    <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase"><span class="w-2.5 h-2.5 bg-blue-600 rounded-full"></span> Present</span>
-                    <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase ml-4"><span class="w-2.5 h-2.5 bg-slate-200 rounded-full"></span> Absent</span>
-                </div>
-            </div>
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        <tr>
-                            <th class="px-10 py-6 min-w-[240px]">Participant</th>
-                            <template x-for="i in 12">
-                                <th class="px-4 py-6 text-center" x-text="'W' + i"></th>
-                            </template>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        <template x-for="student in students" :key="student.id">
-                            <tr class="hover:bg-slate-50/50 group">
-                                <td class="px-10 py-6 font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></td>
-                                <template x-for="i in 12">
-                                    <td class="px-4 py-6">
-                                        <div :class="Math.random() > 0.2 ? 'bg-blue-600' : 'bg-slate-200'" class="w-3 h-3 rounded-full mx-auto transition-transform group-hover:scale-125"></div>
-                                    </td>
-                                </template>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- VIEW: Profile (Single Student) -->
-        <template x-if="selectedStudent">
-            <div class="animate-view">
-                <button @click="selectedStudent = null" class="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-xs uppercase tracking-widest mb-10 transition-colors group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                    Return to Registry
-                </button>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div class="col-span-1 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm text-center">
-                        <div class="w-32 h-32 bg-blue-600 rounded-[3rem] mx-auto mb-10 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-blue-200" x-text="selectedStudent.fname[0] + selectedStudent.lname[0]"></div>
-                        <h3 class="text-3xl font-extrabold text-slate-900" x-text="selectedStudent.fname + ' ' + selectedStudent.lname"></h3>
-                        <p class="text-blue-600 font-black text-sm uppercase tracking-widest mt-3" x-text="selectedStudent.matric"></p>
-                        
-                        <div class="grid grid-cols-2 gap-4 mt-12">
-                            <div class="bg-slate-50 p-6 rounded-3xl">
-                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
-                                <p class="font-bold text-emerald-600">Active</p>
-                            </div>
-                            <div class="bg-slate-50 p-6 rounded-3xl">
-                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Cohort</p>
-                                <p class="font-bold text-slate-900" x-text="selectedStudent.cohort"></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-span-2 space-y-8">
-                        <div class="bg-white p-12 rounded-[4rem] shadow-sm border border-slate-100 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-                            <h4 class="font-black text-xs uppercase text-slate-400 mb-8 tracking-widest relative">Engagement Yield</h4>
-                            <div class="flex items-end gap-12 relative">
-                                <span class="text-8xl font-black text-slate-900 tracking-tighter" x-text="selectedStudent.yield + '%'"></span>
-                                <div class="flex-1 pb-4">
-                                    <div class="h-5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                                        <div class="h-full bg-blue-600 transition-all duration-1000" :style="'width: ' + selectedStudent.yield + '%'"></div>
-                                    </div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-4">Calculated from 24 active sessions</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-slate-900 p-12 rounded-[4rem] text-white">
-                            <h4 class="font-black text-xs uppercase text-white/30 mb-8 tracking-widest">Attendance History</h4>
-                            <div class="space-y-4">
-                                <template x-for="i in 3">
-                                    <div class="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold">Strategic Management Session</p>
-                                                <p class="text-[10px] font-black text-white/40 uppercase">Week 0<span x-text="i"></span> • 9:32 AM</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-emerald-400 font-black text-[10px] uppercase">Verified</span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-
-        <!-- VIEW: Activate (QR Generation) -->
-        <div x-show="activeView === 'activate'" class="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start animate-view">
-            <div class="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm text-center">
-                <h3 class="text-3xl font-extrabold mb-4 tracking-tight">Active Class Session</h3>
-                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-10">DYNAMIC AUTHENTICATION TOKEN</p>
-                <div class="p-12 bg-slate-50 rounded-[4rem] border-4 border-dashed border-slate-200 aspect-square max-w-[400px] mx-auto flex flex-col items-center justify-center group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors"></div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
-                    <p class="mt-8 text-[10px] font-black text-slate-400 group-hover:text-blue-600 tracking-widest transition-colors">SCAN TO JOIN SESSION</p>
-                </div>
-                <div class="mt-12 flex justify-center gap-8">
-                    <div class="text-center">
-                        <p class="text-3xl font-black text-slate-900">42</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Joined</p>
-                    </div>
-                    <div class="w-px h-10 bg-slate-100 mt-2"></div>
-                    <div class="text-center">
-                        <p class="text-3xl font-black text-blue-600">08:14</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Time Left</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Student App Simulation -->
-            <div class="relative pt-12 flex justify-center">
-                <div class="absolute top-0 bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase z-20 shadow-2xl shadow-blue-500/40">Participant View (Sarah)</div>
-                <div class="bg-[#0f172a] w-[340px] h-[680px] rounded-[4.5rem] p-4 border-[12px] border-slate-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden relative">
-                    <div class="bg-white h-full rounded-[3.8rem] flex flex-col p-10">
-                        <div class="flex justify-between items-center mb-16">
-                            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-[1.8rem] flex items-center justify-center shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                            </div>
-                            <div class="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden">
-                                <div class="w-full h-full bg-slate-200"></div>
-                            </div>
-                        </div>
-                        <h4 class="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-3">Welcome,<br/>Sarah!</h4>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-14">Live session detected</p>
-                        
-                        <div class="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 mb-8 relative group overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4">
-                                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
-                            </div>
-                            <p class="text-[9px] font-black text-blue-600 uppercase mb-3 tracking-widest">Ongoing</p>
-                            <h5 class="font-bold text-xl text-slate-900 leading-tight">Strategic Mgmt.<br/><span class="text-slate-400 text-sm font-medium">BUS701 • 9:00 AM</span></h5>
-                        </div>
-                        
-                        <button class="mt-auto bg-blue-600 text-white w-full py-7 rounded-[3rem] font-black text-xs tracking-widest shadow-2xl shadow-blue-500/40 active:scale-95 transition-all">START SCANNING</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modals -->
-    <!-- Student Edit Modal -->
-    <template x-if="editingStudent">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
-                <h3 class="text-3xl font-extrabold mb-10 tracking-tight" x-text="editingStudent.matric ? 'Edit Student' : 'Onboard Student'"></h3>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input x-model="editingStudent.fname" placeholder="First Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
-                        <input x-model="editingStudent.lname" placeholder="Last Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
-                    </div>
-                    <input x-model="editingStudent.matric" placeholder="Matric No (e.g. 24/MMBA/001)" class="w-full bg-slate-50 p-5 rounded-2xl font-mono font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    <select x-model="editingStudent.cohort" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all">
-                        <template x-for="c in cohorts">
-                            <option :value="c.name" x-text="c.name"></option>
-                        </template>
-                    </select>
-                    
-                    <div class="flex gap-4 pt-8">
-                        <button @click="editingStudent = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Cancel</button>
-                        <button @click="saveStudent()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Finalize</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Course Edit Modal -->
-    <template x-if="editingCourse">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
-                <h3 class="text-3xl font-extrabold mb-10 tracking-tight">Curriculum Detail</h3>
-                <div class="space-y-4">
-                    <input x-model="editingCourse.code" placeholder="Course Code (e.g. BUS701)" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    <input x-model="editingCourse.name" placeholder="Full Course Title" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
-                    <div class="flex gap-4 pt-8">
-                        <button @click="editingCourse = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Dismiss</button>
-                        <button @click="saveCourse()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <script>
-        function attendX() {
-            return {
-                activeView: 'overview',
-                selectedStudent: null,
-                editingStudent: null,
-                editingCourse: null,
-                menuItems: [
-                    { id: 'overview', label: 'Overview', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
-                    { id: 'courses', label: 'Curriculum', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>` },
-                    { id: 'registry', label: 'Participants', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
-                    { id: 'matrix', label: 'Session Log', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>` }
-                ],
-                cohorts: [
-                    { name: 'MMBA 10', avg: 85, bars: [40, 60, 45, 80, 55, 90, 30] },
-                    { name: 'MMBA 11', avg: 88, bars: [50, 40, 70, 60, 80, 45, 95] },
-                    { name: 'EMBA 30', avg: 81, bars: [30, 50, 40, 35, 60, 55, 40] },
-                    { name: 'EMBA 31', avg: 79, bars: [20, 35, 45, 60, 40, 30, 50] },
-                    { name: 'MEMBA 13', avg: 92, bars: [80, 90, 85, 95, 90, 88, 92] }
-                ],
-                students: [
-                    { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', cohort: 'MMBA 10', yield: 85 },
-                    { id: 's2', matric: '24/MMBA/002', fname: 'John', lname: 'Doe', cohort: 'MMBA 11', yield: 78 },
-                    { id: 's3', matric: '24/EMBA/105', fname: 'Michael', lname: 'Chen', cohort: 'EMBA 30', yield: 92 },
-                    { id: 's4', matric: '24/MEMBA/04', fname: 'Amara', lname: 'Okoro', cohort: 'MEMBA 13', yield: 95 }
-                ],
-                courses: [
-                    { id: 'c1', code: 'BUS701', name: 'Strategic Management' },
-                    { id: 'c2', code: 'FIN702', name: 'Corporate Finance' },
-                    { id: 'c3', code: 'MKT705', name: 'Digital Transformation' },
-                    { id: 'c4', code: 'ECO708', name: 'Managerial Economics' }
-                ],
-                
-                getViewTitle() {
-                    const titles = {
-                        'overview': 'Insights Dashboard',
-                        'courses': 'Course Management',
-                        'registry': 'Student Registry',
-                        'matrix': 'Attendance Matrix',
-                        'activate': 'Live Session'
-                    };
-                    return titles[this.activeView] || 'AttendX';
-                },
-
-                deleteStudent(id) { 
-                    if(confirm('Remove student from registry?')) {
-                        this.students = this.students.filter(s => s.id !== id); 
-                    }
-                },
-                
-                saveStudent() {
-                    if(!this.editingStudent.fname || !this.editingStudent.matric) return;
-                    const idx = this.students.findIndex(s => s.id === this.editingStudent.id);
-                    if (idx !== -1) {
-                        this.students[idx] = { ...this.editingStudent };
-                    } else {
-                        this.students.push({ ...this.editingStudent });
-                    }
-                    this.editingStudent = null;
-                },
-
-                deleteCourse(id) { 
-                    if(confirm('Delete course from curriculum?')) {
-                        this.courses = this.courses.filter(c => c.id !== id); 
-                    }
-                },
-
-                saveCourse() {
-                    if(!this.editingCourse.name || !this.editingCourse.code) return;
-                    const idx = this.courses.findIndex(c => c.id === this.editingCourse.id);
-                    if (idx !== -1) {
-                        this.courses[idx] = { ...this.editingCourse };
-                    } else {
-                        this.courses.push({ ...this.editingCourse });
-                    }
-                    this.editingCourse = null;
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+export default App;
