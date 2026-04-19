@@ -4,39 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AttendX | Management Dashboard</title>
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React and ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX transformation -->
+    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .animate-in { animation: fadeIn 0.5s ease-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f1f5f9;
+        }
+        .animate-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-[#f1f5f9]">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
-        
-        // Simple Lucide Icon Component Wrapper
+        const { useState, useEffect, useMemo } = React;
+
+        // --- ICON COMPONENT ---
         const Icon = ({ name, className = "w-5 h-5" }) => {
             useEffect(() => {
-                lucide.createIcons();
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
             }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
 
+        // --- MAIN APP ---
         const App = () => {
             const [activeView, setActiveView] = useState('overview');
             const [selectedStudent, setSelectedStudent] = useState(null);
@@ -66,7 +78,12 @@
                 return arr;
             };
 
-            const ALL_COHORTS = [...generateRange("MMBA", 6, 20), ...generateRange("MEMBA", 13, 20), ...generateRange("EMBA", 31, 40)];
+            const ALL_COHORTS = useMemo(() => [
+                ...generateRange("MMBA", 6, 20),
+                ...generateRange("MEMBA", 13, 20),
+                ...generateRange("EMBA", 31, 40)
+            ], []);
+
             const courses = [
                 { id: 'c1', code: 'BUS701', name: 'Strategic Management' },
                 { id: 'c2', code: 'FIN702', name: 'Corporate Finance' },
@@ -92,132 +109,156 @@
             };
 
             if (selectedStudent) {
-                return (
-                    <div className="p-8 max-w-5xl mx-auto animate-in">
-                        <button onClick={() => setSelectedStudent(null)} className="mb-10 flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-colors">
-                            <Icon name="arrow-left" className="w-4 h-4" /> Back to Directory
-                        </button>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="space-y-8">
-                                <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 text-center shadow-sm">
-                                    <div className="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-500/20">
-                                        {selectedStudent.fname[0]}{selectedStudent.lname[0]}
-                                    </div>
-                                    <h3 className="text-2xl font-black">{selectedStudent.fname} {selectedStudent.lname}</h3>
-                                    <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mt-1">{selectedStudent.matric}</p>
-                                    <div className="mt-6 px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[9px] font-black inline-block uppercase">
-                                        {selectedStudent.status}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:col-span-2 space-y-8">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 italic">Engagement Index</p>
-                                        <div className="flex items-end gap-2">
-                                            <span className="text-5xl font-black leading-none">{selectedStudent.yield}%</span>
-                                            <span className="text-xs font-black text-green-500 mb-1">High</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
+                return <StudentProfilePage student={selectedStudent} onBack={() => setSelectedStudent(null)} />;
             }
 
             return (
                 <div className="flex min-h-screen">
+                    {/* Sidebar */}
                     <aside className="w-[260px] bg-[#0f172a] text-white fixed h-full flex flex-col z-40">
                         <div className="p-8 flex items-center gap-3">
-                            <div className="bg-blue-500 p-2 rounded-lg">
+                            <div className="bg-blue-500 p-2 rounded-lg shadow-lg">
                                 <Icon name="activity" className="w-5 h-5 text-white" />
                             </div>
-                            <span className="font-black text-xl uppercase italic">AttendX</span>
+                            <span className="font-black text-xl tracking-tighter uppercase italic">AttendX</span>
                         </div>
                         <nav className="flex-1 px-4 space-y-1">
-                            {[{ id: 'overview', icon: 'layout-grid', label: 'Dashboard' },
+                            {[{ id: 'overview', icon: 'grid-3x3', label: 'Dashboard' },
                               { id: 'registry', icon: 'users', label: 'Participants' },
-                              { id: 'courses', icon: 'book-open', label: 'Modules' }].map(item => (
+                              { id: 'courses', icon: 'book-open', label: 'Modules' },
+                              { id: 'matrix', icon: 'bar-chart-3', label: 'Analytics' }].map(item => (
                                 <button key={item.id} onClick={() => setActiveView(item.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all ${activeView === item.id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>
+                                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-bold text-sm ${activeView === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
                                     <Icon name={item.icon} /> {item.label}
                                 </button>
                             ))}
                         </nav>
                         <div className="p-6">
-                            <button onClick={() => setActiveView('activate')} className="w-full bg-slate-800 py-4 rounded-xl font-black text-xs tracking-widest flex items-center justify-center gap-2 border border-slate-700">
+                            <button onClick={() => setActiveView('activate')} className="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-black text-xs tracking-widest flex items-center justify-center gap-2 border border-slate-700">
                                 <Icon name="qr-code" className="w-4 h-4 text-blue-400" /> LIVE SESSION
                             </button>
                         </div>
                     </aside>
 
-                    <main className="ml-[260px] flex-1 p-8">
+                    {/* Main Content */}
+                    <main className="ml-[260px] flex-1 p-8 animate-in">
                         <header className="flex justify-between items-center mb-8">
                             <div>
-                                <h2 className="text-3xl font-black tracking-tight">{activeView.toUpperCase()}</h2>
-                                <p className="text-slate-500 font-medium text-sm">Managing AttendX Platform Assets</p>
+                                <h2 className="text-3xl font-black tracking-tight text-slate-900 capitalize">
+                                    {activeView === 'overview' ? 'Executive Overview' : activeView}
+                                </h2>
+                                <p className="text-slate-500 font-medium text-sm">Managing AttendX Platform Operations.</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="relative">
+                                    <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input placeholder="Search records..." className="bg-white border-none rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold w-64 focus:ring-2 ring-blue-500/20" />
+                                </div>
                             </div>
                         </header>
 
-                        <div className="animate-in">
-                            {activeView === 'overview' && (
+                        {/* Views */}
+                        {activeView === 'overview' && (
+                            <div className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="bg-white p-6 rounded-[2rem] border border-slate-200">
-                                        <Icon name="users" className="text-blue-500 mb-4" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Participants</p>
-                                        <h4 className="text-2xl font-black">1,248</h4>
-                                    </div>
-                                    <div className="bg-white p-6 rounded-[2rem] border border-slate-200">
-                                        <Icon name="trending-up" className="text-green-500 mb-4" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Avg. Attendance</p>
-                                        <h4 className="text-2xl font-black">84.2%</h4>
-                                    </div>
+                                    <StatCard icon="users" label="Total Participants" value="1,248" trend="+12%" color="bg-blue-500" />
+                                    <StatCard icon="trending-up" label="Avg. Attendance" value="84.2%" trend="+4%" color="bg-green-500" />
+                                    <StatCard icon="book-open" label="Active Modules" value="24" trend="0%" color="bg-orange-500" />
+                                    <StatCard icon="alert-circle" label="At Risk" value="18" trend="-5%" color="bg-red-500" />
                                 </div>
-                            )}
+                                <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm h-64 flex items-center justify-center text-slate-300 font-black italic uppercase tracking-widest">
+                                    Visual Analytics Canvas
+                                </div>
+                            </div>
+                        )}
 
-                            {activeView === 'registry' && (
-                                <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
-                                            <tr>
-                                                <th className="px-8 py-5">Full Name</th>
-                                                <th className="px-8 py-5">Matric No</th>
-                                                <th className="px-8 py-5 text-right">Actions</th>
+                        {activeView === 'registry' && (
+                            <div className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm">
+                                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                                    <h3 className="font-black text-xl">Participant Directory</h3>
+                                    <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 flex items-center gap-2">
+                                        <Icon name="upload" className="w-4 h-4" /> Import CSV
+                                    </button>
+                                </div>
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        <tr>
+                                            <th className="px-8 py-5">Full Name</th>
+                                            <th className="px-8 py-5">Matric No</th>
+                                            <th className="px-8 py-5 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {students.map(s => (
+                                            <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                                                <td className="px-8 py-5">
+                                                    <button onClick={() => setSelectedStudent(s)} className="text-left">
+                                                        <div className="font-black text-sm group-hover:text-blue-600 transition-colors">{s.fname} {s.lname}</div>
+                                                        <div className="text-[10px] text-slate-400 font-bold uppercase">{s.cohort}</div>
+                                                    </button>
+                                                </td>
+                                                <td className="px-8 py-5 font-mono text-[11px] font-black text-slate-500">{s.matric}</td>
+                                                <td className="px-8 py-5 text-right space-x-2">
+                                                    <button onClick={() => setEditingStudent(s)} className="text-slate-400 hover:text-blue-600"><Icon name="edit-3" className="w-4 h-4" /></button>
+                                                    <button onClick={() => deleteStudent(s.id)} className="text-slate-400 hover:text-red-600"><Icon name="trash-2" className="w-4 h-4" /></button>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {students.map(s => (
-                                                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-8 py-5">
-                                                        <button onClick={() => setSelectedStudent(s)} className="text-left">
-                                                            <div className="font-black text-sm text-slate-900">{s.fname} {s.lname}</div>
-                                                            <div className="text-[10px] text-slate-400">{s.cohort}</div>
-                                                        </button>
-                                                    </td>
-                                                    <td className="px-8 py-5 font-mono text-[11px] font-black">{s.matric}</td>
-                                                    <td className="px-8 py-5 text-right">
-                                                        <button onClick={() => deleteStudent(s.id)} className="p-2 text-slate-400 hover:text-red-600">
-                                                            <Icon name="trash-2" className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                            {activeView === 'activate' && (
-                                <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 text-center">
-                                    <Icon name="qr-code" className="w-16 h-16 text-blue-500 mx-auto mb-6" />
-                                    <h3 className="text-xl font-black">Generate Session Token</h3>
-                                    <button onClick={() => showToast("Token Generated")} className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-xl font-black uppercase text-xs tracking-widest">Initialize</button>
+                        {activeView === 'activate' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200">
+                                    <h3 className="text-xl font-black mb-8 flex items-center gap-3"><Icon name="qr-code" className="text-blue-500" /> Session Setup</h3>
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Cohort</label>
+                                            <select className="w-full bg-slate-50 border-none rounded-xl px-4 py-3.5 text-sm font-bold">
+                                                {ALL_COHORTS.map(c => <option key={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                        <button onClick={() => showToast("Syncing Live Session...")} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-slate-900/10">Initialize Live Sync</button>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                                <div className="flex justify-center items-center">
+                                    <div className="w-[280px] aspect-[9/18] bg-slate-900 rounded-[3rem] p-4 border-8 border-slate-800 shadow-2xl flex flex-col items-center">
+                                        <div className="w-12 h-1.5 bg-slate-800 rounded-full mb-10"></div>
+                                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-6">
+                                            <Icon name="shield-check" className="w-8 h-8" />
+                                        </div>
+                                        <h4 className="text-white text-xl font-black uppercase text-center italic leading-none">Security<br/>Handshake</h4>
+                                        <div className="flex-1 w-full mt-10 border-2 border-dashed border-slate-700 rounded-[2rem] flex items-center justify-center">
+                                            <Icon name="qr-code" className="w-16 h-16 text-slate-800" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </main>
 
+                    {/* Modals */}
+                    {editingStudent && (
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-6">
+                            <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-10">
+                                <h3 className="text-2xl font-black mb-8">Update Details</h3>
+                                <form onSubmit={saveEdit} className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase">First Name</label>
+                                        <input value={editingStudent.fname} onChange={(e) => setEditingStudent({...editingStudent, fname: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold" />
+                                    </div>
+                                    <div className="flex gap-4 pt-6">
+                                        <button type="button" onClick={() => setEditingStudent(null)} className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                                        <button type="submit" className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase shadow-xl shadow-blue-500/20">Apply</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Toast */}
                     {toast.visible && (
                         <div className="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] animate-in">
                             <Icon name="check-circle" className="w-4 h-4 text-blue-400" />
@@ -227,6 +268,56 @@
                 </div>
             );
         };
+
+        const StatCard = ({ icon, label, value, trend, color }) => (
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm group hover:border-blue-500/30 transition-all">
+                <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center text-white mb-4 transition-transform group-hover:scale-110`}>
+                    <Icon name={icon} />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+                <div className="flex items-baseline gap-2">
+                    <h4 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h4>
+                    <span className={`text-[10px] font-black ${trend.includes('+') ? 'text-green-500' : 'text-red-500'}`}>{trend}</span>
+                </div>
+            </div>
+        );
+
+        const StudentProfilePage = ({ student, onBack }) => (
+            <div className="p-8 max-w-5xl mx-auto animate-in min-h-screen">
+                <button onClick={onBack} className="mb-10 flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-colors">
+                    <Icon name="arrow-left" className="w-4 h-4" /> Back to Directory
+                </button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 text-center shadow-sm">
+                        <div className="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-blue-500/20">
+                            {student.fname[0]}{student.lname[0]}
+                        </div>
+                        <h3 className="text-2xl font-black">{student.fname} {student.lname}</h3>
+                        <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mt-1">{student.matric}</p>
+                        <div className="mt-6 px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[9px] font-black inline-block uppercase">
+                            {student.status}
+                        </div>
+                    </div>
+                    <div className="lg:col-span-2 bg-white p-10 rounded-[2.5rem] border border-slate-200">
+                        <h4 className="font-black text-lg mb-6 uppercase tracking-tight italic">Engagement Matrix</h4>
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400"><Icon name="calendar" /></div>
+                                        <div>
+                                            <p className="text-sm font-black">Module Session {i}</p>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Oct 2{i}, 2024</p>
+                                        </div>
+                                    </div>
+                                    <Icon name="check-circle" className="text-green-500" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
