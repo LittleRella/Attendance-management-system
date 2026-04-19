@@ -3,35 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Student Management</title>
+    <title>AttendX | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         [x-cloak] { display: none !important; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .animate-view { animation: slideIn 0.3s ease-out forwards; }
+        
+        .sidebar-item-active {
+            background: #2563eb !important;
+            color: white !important;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        }
+
+        .bar-anim {
+            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased" x-data="attendX()">
+<body class="bg-[#f3f7fb] text-[#1e293b]" x-data="attendX()">
 
-    <!-- Sidebar -->
-    <aside class="w-[280px] bg-[#0f172a] text-white fixed h-full flex flex-col p-8 z-40 hidden md:flex">
-        <div class="flex items-center gap-3 mb-12">
-            <div class="bg-blue-600 p-2 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <!-- Sidebar (Dark Theme as per Screenshot) -->
+    <aside class="w-[280px] bg-[#0f172a] text-white fixed h-full flex flex-col z-50">
+        <div class="p-8 flex items-center gap-3">
+            <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <h1 class="font-black text-xl tracking-tighter uppercase">AttendX</h1>
+            <h1 class="font-extrabold text-2xl tracking-tighter uppercase">ATTENDX</h1>
         </div>
         
-        <nav class="space-y-1 flex-1">
+        <nav class="flex-1 px-4 space-y-2 mt-4">
             <template x-for="item in menuItems" :key="item.id">
                 <button 
                     @click="activeView = item.id; selectedStudent = null"
-                    :class="activeView === item.id && !selectedStudent ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
-                    class="w-full flex items-center gap-4 px-5 py-3.5 rounded-xl transition-all font-bold text-sm text-left"
+                    :class="activeView === item.id && !selectedStudent ? 'sidebar-item-active' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
+                    class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-sm text-left"
                 >
                     <span x-html="item.icon"></span>
                     <span x-text="item.label"></span>
@@ -39,67 +51,74 @@
             </template>
         </nav>
 
-        <button 
-            @click="activeView = 'activate'; selectedStudent = null"
-            :class="activeView === 'activate' ? 'bg-white text-slate-900' : 'bg-slate-800 text-slate-400'"
-            class="w-full mt-auto py-4 rounded-xl font-black text-sm flex items-center justify-center gap-3 transition-all"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
-            GEN QR CODE
-        </button>
+        <div class="px-6 mb-6">
+            <div class="bg-[#1e293b] p-6 rounded-[2rem] border border-white/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase mb-3">Options</p>
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-xs font-bold text-slate-300">Auto-Alerts</span>
+                    <div class="w-10 h-5 bg-blue-600 rounded-full flex items-center px-1 relative cursor-pointer">
+                        <div class="w-3.5 h-3.5 bg-white rounded-full shadow-sm absolute right-1"></div>
+                    </div>
+                </div>
+                <button 
+                    @click="activeView = 'activate'; selectedStudent = null"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-500/20"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
+                    GENERATE QR
+                </button>
+            </div>
+        </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="md:ml-[280px] flex-1 p-6 md:p-10 min-h-screen">
+    <main class="ml-[280px] p-10 min-h-screen">
         
-        <!-- View: Student Profile (Conditional "Page") -->
+        <!-- Header Section -->
+        <div x-show="!selectedStudent" class="flex justify-between items-start mb-12">
+            <div>
+                <h2 class="text-4xl font-extrabold text-slate-900 capitalize" x-text="activeView === 'overview' ? 'Overview' : activeView.replace('-', ' ')"></h2>
+                <p class="text-slate-500 font-semibold mt-1">Performance across all active cohorts.</p>
+            </div>
+            
+            <div class="flex gap-4 items-center">
+                <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Academic Year</span>
+                    <span class="text-sm font-bold">19/04/2026</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Term</span>
+                    <select class="text-sm font-bold text-blue-600 bg-transparent border-none outline-none appearance-none cursor-pointer">
+                        <option>Sem 2</option>
+                        <option>Sem 1</option>
+                    </select>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Profile Page (Full Page Override) -->
         <template x-if="selectedStudent">
             <div class="animate-view">
-                <button @click="selectedStudent = null" class="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-bold text-sm mb-8 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                <button @click="selectedStudent = null" class="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-bold text-sm mb-10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                     Back to Registry
                 </button>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="md:col-span-1 bg-white p-8 rounded-[2.5rem] border border-slate-100 text-center shadow-sm">
-                        <div class="w-24 h-24 bg-blue-600 rounded-[2rem] mx-auto mb-6 flex items-center justify-center text-white text-3xl font-black" x-text="selectedStudent.fname[0] + selectedStudent.lname[0]"></div>
-                        <h3 class="text-2xl font-black" x-text="selectedStudent.fname + ' ' + selectedStudent.lname"></h3>
-                        <p class="text-sm font-bold text-blue-600 mb-6" x-text="selectedStudent.matric"></p>
-                        <div class="text-left space-y-4 pt-6 border-t border-slate-50">
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Email</p>
-                                <p class="text-sm font-bold truncate" x-text="selectedStudent.email"></p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Phone</p>
-                                <p class="text-sm font-bold" x-text="selectedStudent.phone"></p>
-                            </div>
-                        </div>
+                <div class="grid grid-cols-3 gap-10">
+                    <div class="col-span-1 bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm text-center">
+                        <div class="w-24 h-24 bg-blue-600 rounded-[2rem] mx-auto mb-8 flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-blue-200" x-text="selectedStudent.fname[0] + selectedStudent.lname[0]"></div>
+                        <h3 class="text-3xl font-extrabold" x-text="selectedStudent.fname + ' ' + selectedStudent.lname"></h3>
+                        <p class="text-blue-600 font-bold mt-2" x-text="selectedStudent.matric"></p>
                     </div>
-                    
-                    <div class="md:col-span-2 space-y-6">
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center justify-between shadow-sm">
-                            <div>
-                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Current Attendance Yield</p>
-                                <h4 class="text-4xl font-black text-slate-900" x-text="selectedStudent.yield + '%'"></h4>
-                            </div>
-                            <div class="w-48 h-3 bg-slate-100 rounded-full overflow-hidden">
-                                <div :class="selectedStudent.yield > 75 ? 'bg-green-500' : 'bg-orange-500'" class="h-full transition-all duration-1000" :style="'width: ' + selectedStudent.yield + '%'"></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                            <h4 class="font-black text-sm uppercase mb-4">Course Breakdown</h4>
-                            <div class="space-y-3">
-                                <template x-for="c in courses" :key="c.id">
-                                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-bold text-slate-900" x-text="c.name"></span>
-                                            <span class="text-[10px] text-slate-400 font-bold uppercase" x-text="c.code"></span>
-                                        </div>
-                                        <span class="text-xs font-black px-4 py-1.5 bg-white rounded-xl text-blue-600 border border-slate-100 shadow-sm">95.4%</span>
-                                    </div>
-                                </template>
+                    <div class="col-span-2 space-y-8">
+                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                            <h4 class="font-black text-xs uppercase text-slate-400 mb-6 tracking-widest">Attendance Yield</h4>
+                            <div class="flex items-end gap-10">
+                                <span class="text-6xl font-black" x-text="selectedStudent.yield + '%'"></span>
+                                <div class="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden mb-4">
+                                    <div class="h-full bg-blue-600" :style="'width: ' + selectedStudent.yield + '%'"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -107,288 +126,189 @@
             </div>
         </template>
 
-        <!-- Main Views (When no student profile selected) -->
-        <div x-show="!selectedStudent" class="animate-view">
-            <header class="mb-10 flex justify-between items-end">
-                <div>
-                    <h2 class="text-3xl font-black tracking-tight text-slate-900 capitalize" x-text="activeView.replace('-', ' ')"></h2>
-                    <p class="text-slate-500 font-medium text-sm">Institution Management Dashboard</p>
-                </div>
-                <div class="hidden md:block">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-4 py-2 rounded-full">Academic Year 2024/2025</span>
-                </div>
-            </header>
+        <!-- View: Overview (Matching Screenshot 43) -->
+        <div x-show="activeView === 'overview' && !selectedStudent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <template x-for="cohort in cohorts" :key="cohort.name">
+                <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+                    <div class="flex justify-between items-center mb-8">
+                        <h4 class="text-xl font-extrabold" x-text="cohort.name"></h4>
+                        <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-widest">Active</span>
+                    </div>
+                    
+                    <!-- Simplified Bar Chart -->
+                    <div class="flex items-end justify-between h-40 gap-3 mb-8 px-2">
+                        <template x-for="h in cohort.bars">
+                            <div class="w-full bg-blue-600 rounded-lg bar-anim" :style="'height: ' + h + '%'"></div>
+                        </template>
+                    </div>
 
-            <!-- Dashboard Overview -->
-            <div x-show="activeView === 'overview'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 group hover:border-blue-200 transition-all">
-                    <p class="text-xs font-black text-slate-400 uppercase mb-2">Total Students</p>
-                    <h3 class="text-4xl font-black" x-text="students.length"></h3>
+                    <div class="pt-8 border-t border-slate-50">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Attendance</p>
+                        <p class="text-4xl font-extrabold mt-1" x-text="cohort.avg + '%'"></p>
+                    </div>
                 </div>
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                    <p class="text-xs font-black text-slate-400 uppercase mb-2">Active Cohorts</p>
-                    <h3 class="text-4xl font-black">7</h3>
-                </div>
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                    <p class="text-xs font-black text-slate-400 uppercase mb-2">Avg. Attendance</p>
-                    <h3 class="text-4xl font-black text-blue-600">84%</h3>
-                </div>
+            </template>
+        </div>
+
+        <!-- View: Courses -->
+        <div x-show="activeView === 'courses' && !selectedStudent" class="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm animate-view">
+            <div class="flex justify-between items-center mb-10">
+                <h3 class="text-2xl font-extrabold">Course Catalog</h3>
+                <button @click="editingCourse = {id: Date.now(), name: '', code: ''}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-200">+ New Course</button>
             </div>
-
-            <!-- Courses View -->
-            <div x-show="activeView === 'courses'" class="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-xl font-black">Managed Courses</h3>
-                    <button @click="editingCourse = {id: Date.now(), name: '', code: ''}" class="bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-bold transition-transform active:scale-95">+ New Course</button>
-                </div>
-                <div class="grid gap-4">
-                    <template x-for="course in courses" :key="course.id">
-                        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-2xl group transition-all hover:bg-slate-100 border border-transparent hover:border-slate-200">
-                            <div>
-                                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest" x-text="course.code"></span>
-                                <h4 class="font-bold text-slate-900 text-lg" x-text="course.name"></h4>
-                            </div>
-                            <div class="flex gap-2">
-                                <button @click="editingCourse = {...course}" class="p-3 bg-white hover:bg-blue-600 hover:text-white rounded-xl text-slate-400 transition-all shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                                </button>
-                                <button @click="deleteCourse(course.id)" class="p-3 bg-white hover:bg-red-600 hover:text-white rounded-xl text-slate-400 transition-all shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                                </button>
-                            </div>
+            <div class="grid gap-4">
+                <template x-for="course in courses" :key="course.id">
+                    <div class="flex items-center justify-between p-6 bg-slate-50/50 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
+                        <div>
+                            <span class="text-[10px] font-black text-blue-600 uppercase" x-text="course.code"></span>
+                            <h4 class="font-bold text-lg text-slate-800" x-text="course.name"></h4>
                         </div>
-                    </template>
-                </div>
+                        <div class="flex gap-2">
+                            <button @click="editingCourse = {...course}" class="p-3 bg-white text-slate-400 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+                            <button @click="deleteCourse(course.id)" class="p-3 bg-white text-slate-400 hover:text-red-600 rounded-xl shadow-sm border border-slate-100"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+                        </div>
+                    </div>
+                </template>
             </div>
+        </div>
 
-            <!-- Registry View -->
-            <div x-show="activeView === 'registry'" class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div class="p-8 flex justify-between items-center border-b border-slate-50">
-                    <h3 class="font-black text-xl">Student Registry</h3>
-                    <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: 'MMBA 10', yield: 100}" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-xs font-bold">+ Add Student</button>
-                </div>
+        <!-- View: Registry -->
+        <div x-show="activeView === 'registry' && !selectedStudent" class="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden animate-view">
+            <div class="p-10 flex justify-between items-center border-b border-slate-50">
+                <h3 class="font-extrabold text-2xl">Student Directory</h3>
+                <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: 'MMBA 10', yield: 100}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black">+ Add Student</button>
+            </div>
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <tr>
+                        <th class="px-10 py-6">Name</th>
+                        <th class="px-10 py-6">Matric No</th>
+                        <th class="px-10 py-6">Cohort</th>
+                        <th class="px-10 py-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    <template x-for="s in students" :key="s.id">
+                        <tr class="hover:bg-slate-50/30 transition-colors">
+                            <td class="px-10 py-6">
+                                <button @click="selectedStudent = s" class="group outline-none text-left">
+                                    <div class="font-bold text-slate-900 group-hover:text-blue-600" x-text="s.fname + ' ' + s.lname"></div>
+                                    <div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Click for Profile</div>
+                                </button>
+                            </td>
+                            <td class="px-10 py-6 text-sm font-bold text-slate-500 font-mono" x-text="s.matric"></td>
+                            <td class="px-10 py-6 text-sm font-bold text-slate-600" x-text="s.cohort"></td>
+                            <td class="px-10 py-6 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <button @click="editingStudent = {...s}" class="p-2.5 text-slate-400 hover:text-blue-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+                                    <button @click="deleteStudent(s.id)" class="p-2.5 text-slate-400 hover:text-red-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Session Matrix View -->
+        <div x-show="activeView === 'matrix'" class="bg-white rounded-[3rem] shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-10 border-b border-slate-50 flex justify-between items-center">
+                <h3 class="font-extrabold text-2xl">Session Matrix</h3>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left">
-                    <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase">
+                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         <tr>
-                            <th class="px-10 py-5">Full Name</th>
-                            <th class="px-10 py-5">Matric No.</th>
-                            <th class="px-10 py-5">Cohort</th>
-                            <th class="px-10 py-5">Yield</th>
-                            <th class="px-10 py-5 text-right">Actions</th>
+                            <th class="px-10 py-6 min-w-[200px]">Student Name</th>
+                            <template x-for="i in 10">
+                                <th class="px-4 py-6 text-center" x-text="'S' + i"></th>
+                            </template>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        <template x-for="s in students" :key="s.id">
-                            <tr class="group hover:bg-slate-50/50 transition-colors">
-                                <td class="px-10 py-6">
-                                    <button @click="selectedStudent = s" class="text-left group outline-none">
-                                        <div class="font-bold text-slate-900 group-hover:text-blue-600 transition-colors" x-text="s.fname + ' ' + s.lname"></div>
-                                        <div class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">View Detailed Profile</div>
-                                    </button>
-                                </td>
-                                <td class="px-10 py-6 text-sm font-mono font-bold text-slate-500 uppercase" x-text="s.matric"></td>
-                                <td class="px-10 py-6 text-sm font-bold text-slate-600" x-text="s.cohort"></td>
-                                <td class="px-10 py-6">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                            <div :class="s.yield > 75 ? 'bg-green-500' : 'bg-orange-500'" class="h-full" :style="'width: ' + s.yield + '%'"></div>
-                                        </div>
-                                        <span class="text-[10px] font-black" x-text="s.yield + '%'"></span>
-                                    </div>
-                                </td>
-                                <td class="px-10 py-6 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button @click="editingStudent = {...s}" class="p-2.5 bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-xl transition-all border border-slate-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                                        </button>
-                                        <button @click="deleteStudent(s.id)" class="p-2.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-xl transition-all border border-slate-100">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                                        </button>
-                                    </div>
-                                </td>
+                        <template x-for="student in students" :key="student.id">
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="px-10 py-6 font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></td>
+                                <template x-for="i in 10">
+                                    <td class="px-4 py-6">
+                                        <div :class="Math.random() > 0.15 ? 'bg-blue-600' : 'bg-slate-200'" class="w-2.5 h-2.5 rounded-full mx-auto"></div>
+                                    </td>
+                                </template>
                             </tr>
                         </template>
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            <!-- Session Matrix View -->
-            <div x-show="activeView === 'matrix'" class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div class="p-8 border-b border-slate-50 flex justify-between items-center">
-                    <div>
-                        <h3 class="font-black text-xl">Session Matrix</h3>
-                        <p class="text-xs text-slate-400 font-bold uppercase mt-1">Attendance tracking per session (S1 - S10)</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <select class="bg-slate-50 text-[10px] font-black uppercase px-4 py-2 rounded-xl outline-none border-none">
-                            <option>BUS701</option>
-                            <option>FIN702</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase">
-                            <tr>
-                                <th class="px-8 py-5 min-w-[200px]">Student Name</th>
-                                <template x-for="i in 10">
-                                    <th class="px-4 py-5 text-center" x-text="'Session ' + i"></th>
-                                </template>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-50">
-                            <template x-for="student in students" :key="student.id">
-                                <tr class="hover:bg-slate-50/50">
-                                    <td class="px-8 py-4 font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></td>
-                                    <template x-for="i in 10">
-                                        <td class="px-4 py-4">
-                                            <div :title="'Session ' + i" :class="Math.random() > 0.15 ? 'bg-green-500' : 'bg-red-400/20'" class="w-3 h-3 rounded-full mx-auto transition-all hover:scale-125 cursor-help"></div>
-                                        </td>
-                                    </template>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+        <!-- Activate View -->
+        <div x-show="activeView === 'activate'" class="grid grid-cols-2 gap-12 items-start">
+            <div class="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm text-center">
+                <h3 class="text-3xl font-extrabold mb-4">Class Session</h3>
+                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-10">Scan to attend</p>
+                <div class="p-10 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-200 aspect-square max-w-[340px] mx-auto flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
                 </div>
             </div>
 
-            <!-- Activate View (Generate QR) -->
-            <div x-show="activeView === 'activate'" class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
-                    <h3 class="text-2xl font-black mb-2">Generate QR Access</h3>
-                    <p class="text-sm text-slate-400 font-medium mb-8">Grant attendance access for the current session.</p>
-                    
-                    <div class="space-y-6">
-                        <div class="p-8 bg-slate-50 rounded-[2.5rem] border-4 border-dashed border-slate-200 flex flex-col items-center justify-center aspect-square max-w-[320px] mx-auto transition-all hover:border-blue-400 group">
-                            <div class="w-full h-full bg-slate-200 rounded-3xl flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
+            <!-- Student App Simulation -->
+            <div class="relative pt-12">
+                <div class="absolute top-0 right-0 bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase z-20 shadow-2xl">Mobile View</div>
+                <div class="bg-[#0f172a] w-[320px] h-[640px] rounded-[4rem] p-4 border-[10px] border-slate-800 shadow-2xl mx-auto overflow-hidden relative">
+                    <div class="bg-white h-full rounded-[3.2rem] flex flex-col p-10">
+                        <div class="flex justify-between items-center mb-16">
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                             </div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase mt-6 group-hover:text-blue-600">Dynamic QR • Refreshes in 15s</p>
                         </div>
-                        <button @click="triggerToast('Access token refreshed and broadcasting')" class="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black transition-all active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-                            Refresh Broadcast
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Student Version Preview -->
-                <div class="relative group">
-                    <div class="absolute -top-6 -right-6 bg-blue-600 text-white px-6 py-3 rounded-full text-xs font-black uppercase z-10 shadow-2xl transition-transform group-hover:scale-110">Student Interface</div>
-                    <div class="bg-slate-900 w-[320px] h-[640px] rounded-[4rem] p-4 border-[12px] border-slate-800 shadow-2xl mx-auto overflow-hidden relative">
-                        <!-- Phone Notch -->
-                        <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-slate-800 w-32 h-6 rounded-b-2xl z-20"></div>
+                        <h4 class="text-3xl font-black mb-2">Hey Sarah!</h4>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-12">Session is live</p>
                         
-                        <div class="bg-white h-full rounded-[3rem] flex flex-col p-8 overflow-hidden">
-                            <div class="flex justify-between items-center mb-12">
-                                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                                </div>
-                                <div class="w-10 h-10 bg-slate-100 rounded-full border-2 border-white shadow-sm overflow-hidden">
-                                    <div class="w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs uppercase">SA</div>
-                                </div>
-                            </div>
-                            
-                            <h4 class="text-2xl font-black leading-tight mb-3">Hi Sarah,<br/>Ready to scan?</h4>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-10">Scan the classroom code</p>
-                            
-                            <div class="flex-1 flex flex-col gap-6">
-                                <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                                    <p class="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Active Class</p>
-                                    <h5 class="font-bold text-slate-900 leading-snug">Strategic Management<br/><span class="text-slate-400 text-sm font-medium">BUS701 • 09:00 AM</span></h5>
-                                </div>
-                                
-                                <button class="mt-auto bg-blue-600 text-white w-full py-6 rounded-[2.5rem] font-black text-sm flex items-center justify-center gap-3 shadow-2xl shadow-blue-200 transition-all active:scale-95">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect width="7" height="7" x="7" y="7" rx="1"/></svg>
-                                    OPEN SCANNER
-                                </button>
-                            </div>
+                        <div class="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mb-6">
+                            <p class="text-[9px] font-black text-blue-600 uppercase mb-2">Current Class</p>
+                            <h5 class="font-bold text-slate-900 leading-tight">Strategic Mgmt.<br/><span class="text-slate-400 text-xs">BUS701 • 9:00AM</span></h5>
                         </div>
+                        
+                        <button class="mt-auto bg-blue-600 text-white w-full py-6 rounded-[2.5rem] font-black text-sm shadow-xl shadow-blue-200">OPEN SCANNER</button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modal: Edit Student -->
+    <!-- Modals -->
     <template x-if="editingStudent">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-view">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-black" x-text="editingStudent.matric ? 'Edit Student' : 'Add New Student'"></h3>
-                    <button @click="editingStudent = null" class="p-3 hover:bg-slate-100 rounded-full transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-                
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl">
+                <h3 class="text-2xl font-extrabold mb-8" x-text="editingStudent.matric ? 'Edit Student' : 'Add Student'"></h3>
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">First Name</label>
-                            <input x-model="editingStudent.fname" placeholder="e.g. Sarah" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-2 border-transparent outline-none mt-1 focus:border-blue-500 focus:bg-white transition-all" />
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Last Name</label>
-                            <input x-model="editingStudent.lname" placeholder="e.g. Ade" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-2 border-transparent outline-none mt-1 focus:border-blue-500 focus:bg-white transition-all" />
-                        </div>
+                    <input x-model="editingStudent.fname" placeholder="First Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 transition-all" />
+                    <input x-model="editingStudent.lname" placeholder="Last Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 transition-all" />
+                    <input x-model="editingStudent.matric" placeholder="Matric No" class="w-full bg-slate-50 p-5 rounded-2xl font-mono font-bold border-2 border-transparent outline-none focus:border-blue-500 transition-all uppercase" />
+                    <div class="flex gap-4 pt-4">
+                        <button @click="editingStudent = null" class="flex-1 bg-slate-100 py-4 rounded-2xl font-bold">Cancel</button>
+                        <button @click="saveStudent()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200">Save</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Matric Number</label>
-                        <input x-model="editingStudent.matric" placeholder="24/MMBA/001" class="w-full bg-slate-50 p-4 rounded-2xl font-mono font-bold border-2 border-transparent outline-none mt-1 focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    </div>
-                    <button @click="saveStudent()" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black mt-6 shadow-xl shadow-blue-100 transition-all active:scale-95">
-                        Confirm & Save
-                    </button>
                 </div>
             </div>
         </div>
     </template>
 
-    <!-- Modal: Edit Course -->
     <template x-if="editingCourse">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-view">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-black" x-text="'Course Editor'"></h3>
-                    <button @click="editingCourse = null" class="p-3 hover:bg-slate-100 rounded-full transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-                
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+            <div class="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl">
+                <h3 class="text-2xl font-extrabold mb-8">Course Editor</h3>
                 <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Course Code</label>
-                        <input x-model="editingCourse.code" placeholder="e.g. BUS701" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-2 border-transparent outline-none mt-1 focus:border-blue-500 focus:bg-white transition-all uppercase" />
+                    <input x-model="editingCourse.code" placeholder="Course Code (e.g. BUS701)" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 transition-all uppercase" />
+                    <input x-model="editingCourse.name" placeholder="Course Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 transition-all" />
+                    <div class="flex gap-4 pt-4">
+                        <button @click="editingCourse = null" class="flex-1 bg-slate-100 py-4 rounded-2xl font-bold">Cancel</button>
+                        <button @click="saveCourse()" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200">Save</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Course Name</label>
-                        <input x-model="editingCourse.name" placeholder="e.g. Strategic Management" class="w-full bg-slate-50 p-4 rounded-2xl font-bold border-2 border-transparent outline-none mt-1 focus:border-blue-500 focus:bg-white transition-all" />
-                    </div>
-                    <button @click="saveCourse()" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black mt-6 shadow-xl shadow-slate-200 transition-all active:scale-95">
-                        Save Course
-                    </button>
                 </div>
             </div>
         </div>
     </template>
-
-    <!-- Toast Notification -->
-    <div 
-        x-show="toast.visible" 
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="fixed bottom-8 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-8 bg-slate-900 text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-4 z-[200] border border-white/10"
-        x-cloak
-    >
-        <div class="bg-blue-500 rounded-full p-1.5 text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span class="text-sm font-black tracking-tight" x-text="toast.message"></span>
-    </div>
 
     <script>
         function attendX() {
@@ -397,58 +317,40 @@
                 selectedStudent: null,
                 editingStudent: null,
                 editingCourse: null,
-                toast: { visible: false, message: '' },
                 menuItems: [
                     { id: 'overview', label: 'Dashboard', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>` },
-                    { id: 'courses', label: 'Courses', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>` },
-                    { id: 'registry', label: 'Registry', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
+                    { id: 'courses', label: 'Manage Courses', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>` },
+                    { id: 'registry', label: 'Student Registry', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>` },
                     { id: 'matrix', label: 'Session Matrix', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>` }
                 ],
+                cohorts: [
+                    { name: 'MMBA 10', avg: 85, bars: [40, 60, 45, 80, 55, 90, 30] },
+                    { name: 'MMBA 11', avg: 88, bars: [50, 40, 70, 60, 80, 45, 95] },
+                    { name: 'EMBA 30', avg: 81, bars: [30, 50, 40, 35, 60, 55, 40] },
+                    { name: 'EMBA 31', avg: 79, bars: [20, 35, 45, 60, 40, 30, 50] },
+                    { name: 'MEMBA 13', avg: 92, bars: [80, 90, 85, 95, 90, 88, 92] }
+                ],
                 students: [
-                    { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah.ade@edu.ng', phone: '+234 802 345 6789', cohort: 'MMBA 10', yield: 88 },
-                    { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'j.doe@corp.com', phone: '+234 810 123 4567', cohort: 'EMBA 31', yield: 72 },
-                    { id: 's3', matric: '24/MEM/045', fname: 'Grace', lname: 'Eze', email: 'grace@edu.ng', phone: '+234 703 987 6543', cohort: 'MEMBA 13', yield: 95 },
-                    { id: 's4', matric: '24/MMBA/002', fname: 'David', lname: 'Okon', email: 'david@gmail.com', phone: '+234 905 555 1234', cohort: 'MMBA 10', yield: 64 }
+                    { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', cohort: 'MMBA 10', yield: 85 },
+                    { id: 's2', matric: '24/MMBA/002', fname: 'John', lname: 'Doe', cohort: 'MMBA 11', yield: 78 }
                 ],
                 courses: [
                     { id: 'c1', code: 'BUS701', name: 'Strategic Management' },
-                    { id: 'c2', code: 'FIN702', name: 'Corporate Finance' },
-                    { id: 'c3', code: 'MKT703', name: 'Digital Marketing' }
+                    { id: 'c2', code: 'FIN702', name: 'Corporate Finance' }
                 ],
-                deleteStudent(id) {
-                    this.students = this.students.filter(s => s.id !== id);
-                    this.triggerToast('Record purged from registry');
-                },
+                deleteStudent(id) { this.students = this.students.filter(s => s.id !== id); },
                 saveStudent() {
                     const idx = this.students.findIndex(s => s.id === this.editingStudent.id);
-                    if (idx !== -1) {
-                        this.students[idx] = { ...this.editingStudent };
-                        this.triggerToast('Student profile synchronized');
-                    } else {
-                        this.students.push({ ...this.editingStudent });
-                        this.triggerToast('New student registered');
-                    }
+                    if (idx !== -1) this.students[idx] = { ...this.editingStudent };
+                    else this.students.push({ ...this.editingStudent });
                     this.editingStudent = null;
                 },
-                deleteCourse(id) {
-                    this.courses = this.courses.filter(c => c.id !== id);
-                    this.triggerToast('Course catalogue updated');
-                },
+                deleteCourse(id) { this.courses = this.courses.filter(c => c.id !== id); },
                 saveCourse() {
                     const idx = this.courses.findIndex(c => c.id === this.editingCourse.id);
-                    if (idx !== -1) {
-                        this.courses[idx] = { ...this.editingCourse };
-                        this.triggerToast('Course details updated');
-                    } else {
-                        this.courses.push({ ...this.editingCourse });
-                        this.triggerToast('New course added');
-                    }
+                    if (idx !== -1) this.courses[idx] = { ...this.editingCourse };
+                    else this.courses.push({ ...this.editingCourse });
                     this.editingCourse = null;
-                },
-                triggerToast(msg) {
-                    this.toast.message = msg;
-                    this.toast.visible = true;
-                    setTimeout(() => this.toast.visible = false, 3000);
                 }
             }
         }
