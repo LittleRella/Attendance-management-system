@@ -4,393 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AttendX | Management Dashboard</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React and ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc;
-        }
-        .animate-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        ::-webkit-scrollbar { width: 5px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse-ring { animation: pulseRing 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
+        @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        const { useState, useEffect } = React;
 
         const Icon = ({ name, className = "w-5 h-5" }) => {
-            useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            }, [name, className]);
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name, className]);
             return <i data-lucide={name} className={className}></i>;
         };
 
         const App = () => {
             const [activeView, setActiveView] = useState('courses');
-            const [selectedStudent, setSelectedStudent] = useState(null);
+            const [isLive, setIsLive] = useState(false);
+            const [liveMode, setLiveMode] = useState('physical');
             const [toast, setToast] = useState({ visible: false, message: '' });
-            
+
             const [students, setStudents] = useState([
-                { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 'sarah.ade@edu.ng', phone: '+234 802 345 6789', cohort: 'MMBA 10', yield: 88, status: 'Active' },
-                { id: 's2', matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'j.doe@corp.com', phone: '+234 810 123 4567', cohort: 'EMBA 15', yield: 72, status: 'Active' }
+                { id: 1, matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', email: 's.ade@edu.ng', cohort: 'MMBA 10' },
+                { id: 2, matric: '24/EMBA/012', fname: 'John', lname: 'Doe', email: 'j.doe@corp.com', cohort: 'EMBA 15' },
+                { id: 3, matric: '24/MMBA/045', fname: 'Amaka', lname: 'Okonkwo', email: 'a.okon@edu.ng', cohort: 'MMBA 10' },
+                { id: 4, matric: '24/MEMBA/003', fname: 'Bello', lname: 'Musa', email: 'b.musa@gov.ng', cohort: 'MEMBA 8' }
             ]);
 
             const [courses, setCourses] = useState([
-                { id: 'c1', code: 'BUS701', name: 'Strategic Management', track: 'MMBA', units: 1.5, cohortNo: '10', year: '2024', startDate: '2024-05-12' },
-                { id: 'c2', code: 'FIN702', name: 'Corporate Finance', track: 'EMBA', units: 3.0, cohortNo: '15', year: '2024', startDate: '2024-06-01' },
-                { id: 'c3', code: 'MKT703', name: 'Digital Marketing', track: 'MMBA', units: 1.5, cohortNo: '12', year: '2025', startDate: '2025-01-15' },
-                { id: 'c4', code: 'OPS704', name: 'Operations Logic', track: 'MEMBA', units: 2.0, cohortNo: '8', year: '2024', startDate: '2024-04-20' }
+                { id: 1, code: 'BUS701', name: 'Strategic Management', track: 'MMBA', units: 1.5, cohortNo: '10' },
+                { id: 2, code: 'ECO702', name: 'Managerial Economics', track: 'EMBA', units: 2.0, cohortNo: '15' },
+                { id: 3, code: 'FIN705', name: 'Corporate Finance', track: 'MMBA', units: 1.5, cohortNo: '10' }
             ]);
 
-            const [modalMode, setModalMode] = useState(null); // 'add' | 'edit' | null
-            const [editingId, setEditingId] = useState(null);
-            const [courseForm, setCourseForm] = useState({ 
-                code: '', name: '', track: 'MMBA', units: 1.5, cohortNo: '10', year: '2024', startDate: '' 
-            });
-
-            const getCohortsForTrack = (track) => {
-                const arr = [];
-                for (let i = 6; i <= 20; i++) arr.push(`${track} ${i}`);
-                return arr;
-            };
-
-            const ALL_COHORTS = useMemo(() => [
-                ...getCohortsForTrack("MMBA"),
-                ...getCohortsForTrack("EMBA"),
-                ...getCohortsForTrack("MEMBA")
-            ], []);
+            const [currentAttendees, setCurrentAttendees] = useState([]);
 
             const showToast = (msg) => {
                 setToast({ visible: true, message: msg });
                 setTimeout(() => setToast({ visible: false, message: '' }), 3000);
             };
 
-            const openAddModal = () => {
-                setCourseForm({ code: '', name: '', track: 'MMBA', units: 1.5, cohortNo: '10', year: '2024', startDate: '' });
-                setModalMode('add');
-            };
-
-            const openEditModal = (course) => {
-                setCourseForm({ ...course });
-                setEditingId(course.id);
-                setModalMode('edit');
-            };
-
-            const handleSubmitCourse = (e) => {
-                e.preventDefault();
-                if (!courseForm.code || !courseForm.name) return;
-
-                if (modalMode === 'add') {
-                    const id = `c-${Date.now()}`;
-                    setCourses([...courses, { ...courseForm, id: id, units: parseFloat(courseForm.units) }]);
-                    showToast("Course added successfully");
+            const toggleAttendee = (studentId) => {
+                if (currentAttendees.includes(studentId)) {
+                    setCurrentAttendees(prev => prev.filter(id => id !== studentId));
                 } else {
-                    setCourses(courses.map(c => c.id === editingId ? { ...courseForm, units: parseFloat(courseForm.units) } : c));
-                    showToast("Course updated successfully");
+                    setCurrentAttendees(prev => [...prev, studentId]);
+                    showToast("Attendee Verified");
                 }
-                
-                setModalMode(null);
-                setEditingId(null);
             };
-
-            const deleteCourse = (id) => {
-                setCourses(courses.filter(c => c.id !== id));
-                showToast("Course removed");
-            };
-
-            if (selectedStudent) {
-                return <StudentProfilePage student={selectedStudent} onBack={() => setSelectedStudent(null)} />;
-            }
 
             return (
                 <div className="flex min-h-screen bg-slate-50 text-slate-900">
                     {/* Sidebar */}
-                    <aside className="w-64 bg-slate-900 text-white fixed h-full flex flex-col z-40 border-r border-slate-800">
+                    <aside className="w-72 bg-slate-900 text-white fixed h-full flex flex-col z-40 border-r border-slate-800">
                         <div className="p-8 flex items-center gap-3">
-                            <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-600/20">
+                            <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-600/20">
                                 <Icon name="graduation-cap" className="w-6 h-6 text-white" />
                             </div>
                             <span className="font-black text-xl tracking-tighter uppercase italic">AttendX</span>
                         </div>
-                        <nav className="flex-1 px-4 space-y-1 mt-4">
-                            {[{ id: 'overview', icon: 'layout-dashboard', label: 'Overview' },
-                              { id: 'registry', icon: 'users', label: 'Participants' },
-                              { id: 'courses', icon: 'book-marked', label: 'Modules' }].map(item => (
-                                <button key={item.id} onClick={() => setActiveView(item.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${activeView === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
-                                    <Icon name={item.icon} className="w-5 h-5" /> {item.label}
-                                </button>
-                            ))}
+                        
+                        <nav className="flex-1 px-4 space-y-1.5 mt-4">
+                            <NavItem active={!isLive && activeView === 'overview'} onClick={() => {setActiveView('overview'); setIsLive(false)}} icon="layout-dashboard" label="Overview" />
+                            <NavItem active={!isLive && activeView === 'registry'} onClick={() => {setActiveView('registry'); setIsLive(false)}} icon="users" label="Student Registry" />
+                            <NavItem active={!isLive && activeView === 'courses'} onClick={() => {setActiveView('courses'); setIsLive(false)}} icon="book-marked" label="Module Catalog" />
+                            <NavItem active={!isLive && activeView === 'reports'} onClick={() => {setActiveView('reports'); setIsLive(false)}} icon="file-bar-chart" label="Attendance Reports" />
                         </nav>
+
                         <div className="p-6">
-                            <button onClick={() => setActiveView('activate')} className="w-full bg-blue-50/10 hover:bg-blue-50/20 text-blue-400 py-4 rounded-2xl font-black text-xs tracking-widest flex items-center justify-center gap-2 border border-blue-400/20 transition-all">
-                                <Icon name="radio" className="w-4 h-4 animate-pulse" /> LIVE SESSION
+                            <button 
+                                onClick={() => setIsLive(true)} 
+                                className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest flex items-center justify-center gap-2 border transition-all ${isLive ? 'bg-emerald-500 text-white border-emerald-400' : 'bg-blue-50/10 hover:bg-blue-50/20 text-blue-400 border-blue-400/20'}`}
+                            >
+                                <Icon name="radio" className={`w-4 h-4 ${isLive ? 'animate-pulse' : ''}`} /> LIVE SESSION
                             </button>
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="ml-64 flex-1 p-10 animate-in">
-                        <header className="flex justify-between items-center mb-10">
-                            <div>
-                                <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                                    {activeView === 'courses' ? 'Module Catalog' : 
-                                     activeView === 'registry' ? 'Participant Registry' : 'Executive Overview'}
-                                </h2>
-                                <p className="text-slate-500 font-medium text-sm mt-1">Management Console • {new Date().toLocaleDateString()}</p>
-                            </div>
-                            <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-                                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-bold text-slate-600">AD</div>
-                                <div className="pr-4"><p className="text-xs font-black uppercase">Admin Portal</p></div>
-                            </div>
-                        </header>
-
-                        {activeView === 'overview' && (
-                            <div className="space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <StatCard icon="users-round" label="Total Students" value={students.length} color="bg-indigo-500" />
-                                    <StatCard icon="bookmark" label="Course Count" value={courses.length} color="bg-emerald-500" />
-                                    <StatCard icon="sigma" label="Total Credits" value={courses.reduce((acc, c) => acc + Number(c.units), 0).toFixed(1)} color="bg-amber-500" />
-                                </div>
-                                <div className="bg-white p-12 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center opacity-60">
-                                    <Icon name="bar-chart" className="w-16 h-16 text-slate-200 mb-4" />
-                                    <p className="text-slate-400 font-black italic uppercase tracking-widest text-sm">Real-time Analytics Idle</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeView === 'registry' && (
-                            <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
-                                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-                                    <h3 className="font-black text-xl">Database Directory</h3>
-                                    <button className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all">Add Record</button>
-                                </div>
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        <tr>
-                                            <th className="px-8 py-5">Participant</th>
-                                            <th className="px-8 py-5">Matric No.</th>
-                                            <th className="px-8 py-5">Cohort</th>
-                                            <th className="px-8 py-5 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 font-medium text-sm">
-                                        {students.map(s => (
-                                            <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                                                <td className="px-8 py-5">
-                                                    <div className="font-bold">{s.fname} {s.lname}</div>
-                                                    <div className="text-[11px] text-slate-400">{s.email}</div>
-                                                </td>
-                                                <td className="px-8 py-5 text-slate-500 font-mono">{s.matric}</td>
-                                                <td className="px-8 py-5"><span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black uppercase">{s.cohort}</span></td>
-                                                <td className="px-8 py-5 text-right">
-                                                    <button className="text-slate-300 hover:text-slate-900"><Icon name="more-horizontal" /></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {activeView === 'courses' && (
-                            <div className="space-y-8">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex gap-4">
-                                        {['MMBA', 'EMBA', 'MEMBA'].map(track => (
-                                            <div key={track} className="px-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{track} PROGRAM</p>
-                                                <p className="text-xl font-black">{courses.filter(c => c.track === track).length} <span className="text-xs text-slate-400 font-bold uppercase ml-1">Modules</span></p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <button 
-                                        onClick={openAddModal}
-                                        className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-blue-600/30 hover:scale-[1.02] transition-all"
-                                    >
-                                        <Icon name="plus-circle" className="w-5 h-5" /> New Module
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {courses.map(course => (
-                                        <div key={course.id} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm relative group hover:shadow-xl hover:shadow-slate-200/50 transition-all flex flex-col">
-                                            <div className="flex justify-between items-start mb-6">
-                                                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                                    course.track === 'MMBA' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
-                                                    course.track === 'EMBA' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 
-                                                    'bg-orange-50 text-orange-600 border border-orange-100'
-                                                }`}>
-                                                    {course.track} Track
-                                                </div>
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <button onClick={() => openEditModal(course)} className="text-slate-400 hover:text-blue-600">
-                                                        <Icon name="pencil" className="w-4 h-4" />
-                                                    </button>
-                                                    <button onClick={() => deleteCourse(course.id)} className="text-slate-400 hover:text-red-500">
-                                                        <Icon name="trash-2" className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            
-                                            <h4 className="text-lg font-black text-slate-900 leading-tight mb-1">{course.name}</h4>
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{course.code}</span>
-                                                <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                                <span className="text-xs font-black text-blue-500 uppercase">Cohort {course.cohortNo}</span>
-                                            </div>
-
-                                            <div className="bg-slate-50 p-4 rounded-2xl mb-6 flex flex-col gap-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Start Date</span>
-                                                    <span className="text-[10px] font-bold text-slate-700">{course.startDate || 'TBD'}</span>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Academic Year</span>
-                                                    <span className="text-[10px] font-bold text-slate-700">{course.year}</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="mt-auto flex items-center justify-between pt-6 border-t border-slate-50">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                                                        <Icon name="award" className="w-4 h-4" />
-                                                    </div>
-                                                    <span className="text-sm font-black text-slate-700">{course.units.toFixed(1)} <span className="text-[10px] uppercase text-slate-400 ml-0.5">Credits</span></span>
-                                                </div>
-                                                <div className="text-[10px] font-black text-slate-300 uppercase italic tracking-tighter">Verified Logic</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {activeView === 'activate' && (
-                            <div className="bg-white p-12 rounded-[3rem] border border-slate-200 max-w-lg mx-auto text-center shadow-xl shadow-slate-200/50">
-                                <div className="w-24 h-24 bg-blue-600 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-500/40">
-                                    <Icon name="scan-face" className="w-12 h-12 text-white" />
-                                </div>
-                                <h3 className="text-2xl font-black mb-3">Initialize Session</h3>
-                                <p className="text-slate-500 text-sm mb-10 font-medium px-4 leading-relaxed">Launch an attendance handshake for targeted cohorts. This generates a unique dynamic link.</p>
-                                <div className="space-y-6 text-left">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Cohort Group</label>
-                                        <select className="w-full bg-slate-50 border-2 border-transparent focus:border-blue-500/20 focus:bg-white rounded-2xl p-4 font-bold text-slate-700 outline-none transition-all">
-                                            {ALL_COHORTS.map(c => <option key={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                    <button className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-xl hover:bg-slate-800 transition-all active:scale-[0.98]">Broadcast QR Protocol</button>
-                                </div>
-                            </div>
+                    <main className="ml-72 flex-1 p-10 animate-in overflow-x-hidden">
+                        {isLive ? (
+                            <LiveSessionView 
+                                course={courses[0]} 
+                                students={students} 
+                                currentAttendees={currentAttendees}
+                                toggleAttendee={toggleAttendee}
+                                endSession={() => setIsLive(false)}
+                                liveMode={liveMode}
+                                setLiveMode={setLiveMode}
+                            />
+                        ) : activeView === 'registry' ? (
+                            <RegistryView students={students} />
+                        ) : activeView === 'courses' ? (
+                            <CoursesView courses={courses} />
+                        ) : (
+                            <OverviewView students={students} courses={courses} />
                         )}
                     </main>
 
-                    {/* Course Modal (Add/Edit) */}
-                    {modalMode && (
-                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
-                            <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in border border-slate-100 flex flex-col max-h-[90vh]">
-                                <div className="p-10 pb-6 border-b border-slate-50">
-                                    <h3 className="text-2xl font-black flex items-center gap-3">
-                                        <div className="bg-blue-100 p-2 rounded-xl">
-                                            <Icon name={modalMode === 'add' ? "layer-plus" : "pencil"} className="text-blue-600" /> 
-                                        </div>
-                                        {modalMode === 'add' ? 'New Module' : 'Edit Module'}
-                                    </h3>
-                                    <p className="text-slate-400 text-xs font-bold uppercase mt-2 tracking-widest">Update module specifics and cohort targeting</p>
-                                </div>
-                                
-                                <form onSubmit={handleSubmitCourse} className="p-10 pt-8 space-y-6 overflow-y-auto">
-                                    {/* Program Selection */}
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Program Track</label>
-                                        <div className="flex gap-2">
-                                            {['MMBA', 'EMBA', 'MEMBA'].map(t => (
-                                                <button 
-                                                    key={t}
-                                                    type="button"
-                                                    onClick={() => setCourseForm({...courseForm, track: t})}
-                                                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                                                        courseForm.track === t ? 'bg-slate-900 border-slate-900 text-white shadow-xl' : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
-                                                    }`}
-                                                >
-                                                    {t}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Module Code</label>
-                                            <input placeholder="e.g. FIN801" value={courseForm.code} onChange={(e) => setCourseForm({...courseForm, code: e.target.value.toUpperCase()})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Credit Units</label>
-                                            <input type="number" step="0.5" min="0.5" value={courseForm.units} onChange={(e) => setCourseForm({...courseForm, units: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none" />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Module Title</label>
-                                        <input placeholder="Enter full course name" value={courseForm.name} onChange={(e) => setCourseForm({...courseForm, name: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none" />
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cohort No.</label>
-                                            <input type="number" placeholder="e.g. 10" value={courseForm.cohortNo} onChange={(e) => setCourseForm({...courseForm, cohortNo: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Academic Year</label>
-                                            <select value={courseForm.year} onChange={(e) => setCourseForm({...courseForm, year: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm font-bold focus:ring-2 ring-blue-500/10 outline-none appearance-none">
-                                                <option>2024</option>
-                                                <option>2025</option>
-                                                <option>2026</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
-                                            <input type="date" value={courseForm.startDate} onChange={(e) => setCourseForm({...courseForm, startDate: e.target.value})} className="w-full bg-slate-50 border-none rounded-xl p-4 text-xs font-bold focus:ring-2 ring-blue-500/10 outline-none" />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-4 pt-6 mt-4">
-                                        <button type="button" onClick={() => setModalMode(null)} className="flex-1 py-4 text-slate-400 font-black text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors">Discard</button>
-                                        <button type="submit" className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl text-[11px] uppercase shadow-xl shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all">
-                                            {modalMode === 'add' ? 'Create Module' : 'Save Changes'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Toast Notification */}
+                    {/* Notification Toast */}
                     {toast.visible && (
-                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] animate-in border border-slate-800">
-                            <Icon name="sparkles" className="w-4 h-4 text-blue-400" />
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[110] animate-in">
+                            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
                             <span className="text-[11px] font-black uppercase tracking-widest">{toast.message}</span>
                         </div>
                     )}
@@ -398,13 +127,182 @@
             );
         };
 
-        const StatCard = ({ icon, label, value, color }) => (
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
-                <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-current/10`}>
-                    <Icon name={icon} className="w-6 h-6" />
+        const NavItem = ({ active, onClick, icon, label }) => (
+            <button onClick={onClick}
+                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all font-bold text-sm ${active ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
+                <Icon name={icon} className="w-5 h-5" /> {label}
+            </button>
+        );
+
+        const LiveSessionView = ({ course, students, currentAttendees, toggleAttendee, endSession, liveMode, setLiveMode }) => (
+            <div className="space-y-8 animate-in">
+                <header className="flex justify-between items-end">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Broadcasting Session</span>
+                        </div>
+                        <h2 className="text-4xl font-black tracking-tight">{course.name}</h2>
+                        <p className="text-slate-500 font-bold">{course.code} • Cohort {course.cohortNo}</p>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="bg-white border border-slate-200 px-6 py-4 rounded-2xl flex items-center gap-5 shadow-sm">
+                            <div className="text-right">
+                                <p className="text-[9px] font-black text-slate-400 uppercase">Live Count</p>
+                                <p className="text-lg font-black text-blue-600">{currentAttendees.length}/{students.length}</p>
+                            </div>
+                        </div>
+                        <button onClick={endSession} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20">End Broadcast</button>
+                    </div>
+                </header>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden h-[500px]">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-[60px] rounded-full"></div>
+                            <div className="relative z-10 flex flex-col h-full">
+                                <div className="flex justify-between items-center mb-8">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 font-mono">Terminal ID: AX-902</p>
+                                    <Icon name="nfc" className="w-5 h-5 text-blue-400" />
+                                </div>
+                                
+                                <div className="flex p-1 bg-slate-800 rounded-2xl mb-8">
+                                    <button onClick={() => setLiveMode('physical')} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${liveMode === 'physical' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Physical</button>
+                                    <button onClick={() => setLiveMode('virtual')} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${liveMode === 'virtual' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Virtual</button>
+                                </div>
+
+                                {liveMode === 'physical' ? (
+                                    <div className="space-y-10 animate-in text-center flex flex-col items-center">
+                                        <div className="w-40 h-40 bg-slate-800 rounded-[2rem] flex flex-col items-center justify-center border-2 border-slate-700 relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 to-transparent"></div>
+                                            <div className="relative z-10 flex flex-col items-center">
+                                                <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mb-3 relative">
+                                                    <div className="absolute inset-0 rounded-full bg-blue-500 pulse-ring"></div>
+                                                    <Icon name="qr-code" className="w-8 h-8 text-blue-400" />
+                                                </div>
+                                                <p className="font-black text-[10px] uppercase tracking-widest text-slate-300">Scanner Active</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-500 max-w-[200px]">Position student ID card within the frame for automatic entry</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6 animate-in">
+                                        <div className="bg-blue-600/10 border border-blue-500/20 rounded-3xl p-6">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center"><Icon name="video" /></div>
+                                                <div><p className="font-black text-sm tracking-tight">Virtual Bridge</p><p className="text-[10px] text-slate-400 font-bold uppercase">Presence Syncing</p></div>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden mb-2">
+                                                <div className="h-full bg-emerald-500 w-[94%]"></div>
+                                            </div>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase">Latency: 24ms • 1080p Stream</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-2">
+                        <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[500px]">
+                            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-black text-xl">Manual Override List</h3>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Click card to verify</div>
+                            </div>
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+                                {students.map(s => (
+                                    <div key={s.id} onClick={() => toggleAttendee(s.id)} 
+                                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer group flex items-center gap-4 ${currentAttendees.includes(s.id) ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-white border-slate-100 hover:border-blue-200'}`}>
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${currentAttendees.includes(s.id) ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                            <Icon name={currentAttendees.includes(s.id) ? "user-check" : "user"} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h5 className="font-black text-sm tracking-tight">{s.fname} {s.lname}</h5>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">{s.matric}</p>
+                                        </div>
+                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${currentAttendees.includes(s.id) ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
+                                            {currentAttendees.includes(s.id) ? 'Live' : 'Absent'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-                <h4 className="text-3xl font-black text-slate-900 tracking-tighter">{value}</h4>
+            </div>
+        );
+
+        const OverviewView = ({ students, courses }) => (
+            <div className="space-y-10 animate-in">
+                <header>
+                    <h2 className="text-4xl font-black tracking-tight">Executive Dashboard</h2>
+                    <p className="text-slate-500 font-bold mt-1">Real-time engagement and resource monitoring</p>
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard icon="users" label="Registered Students" value={students.length} color="bg-indigo-500" />
+                    <StatCard icon="presentation" label="Total Sessions" value="24" color="bg-blue-500" />
+                    <StatCard icon="trending-up" label="Avg. Attendance" value="82%" color="bg-emerald-500" />
+                </div>
+            </div>
+        );
+
+        const RegistryView = ({ students }) => (
+            <div className="space-y-8 animate-in">
+                <header><h2 className="text-4xl font-black tracking-tight">Student Registry</h2></header>
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <th className="px-8 py-5">Full Name</th>
+                                <th className="px-8 py-5">Matric No.</th>
+                                <th className="px-8 py-5">Cohort</th>
+                                <th className="px-8 py-5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {students.map(s => (
+                                <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="px-8 py-5 font-bold">{s.fname} {s.lname}</td>
+                                    <td className="px-8 py-5 text-slate-500 font-mono italic">{s.matric}</td>
+                                    <td className="px-8 py-5"><span className="px-3 py-1 bg-slate-100 rounded-full text-[9px] font-black uppercase">{s.cohort}</span></td>
+                                    <td className="px-8 py-5 text-right"><button className="text-slate-300 hover:text-red-500"><Icon name="trash-2" className="w-4 h-4" /></button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+
+        const CoursesView = ({ courses }) => (
+            <div className="space-y-8 animate-in">
+                <header><h2 className="text-4xl font-black tracking-tight">Module Catalog</h2></header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.map(course => (
+                        <div key={course.id} className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm transition-all hover:shadow-xl hover:shadow-blue-500/5 group cursor-pointer">
+                            <div className="bg-blue-50 text-blue-600 px-4 py-1 rounded-full inline-block text-[10px] font-black uppercase tracking-widest mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all">{course.track} Track</div>
+                            <h4 className="text-xl font-black mb-2 leading-tight">{course.name}</h4>
+                            <p className="text-sm font-bold text-slate-400 uppercase mb-8 tracking-wider">{course.code} • Cohort {course.cohortNo}</p>
+                            <div className="pt-8 border-t border-slate-50 flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
+                                <span className="text-slate-400">{course.units} Credit Units</span>
+                                <div className="flex items-center gap-1 text-blue-600">View Roster <Icon name="chevron-right" className="w-3 h-3" /></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const StatCard = ({ icon, label, value, color }) => (
+            <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
+                <div className={`w-14 h-14 ${color} rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg shadow-inherit/20`}>
+                    <Icon name={icon} className="w-7 h-7" />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{label}</p>
+                <h4 className="text-5xl font-black text-slate-900 tracking-tighter">{value}</h4>
+                <div className="absolute bottom-0 right-0 p-8 text-slate-50 opacity-0 group-hover:opacity-100 transition-all scale-50 group-hover:scale-100">
+                    <Icon name={icon} className="w-20 h-20 text-slate-100" />
+                </div>
             </div>
         );
 
