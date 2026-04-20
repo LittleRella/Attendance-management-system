@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AttendX | Management Dashboard</title>
+    <title>AttendX Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -15,10 +15,10 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
-        
-        // Icon Helper Component (replaces lucide-react imports)
+
+        // Custom Icon Component to replace standard imports
         const Icon = ({ name, size = 20, className = "" }) => {
-            useEffect(() => { if(window.lucide) window.lucide.createIcons(); }, [name]);
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
 
@@ -65,20 +65,21 @@
                 const assignedCohorts = userData.email.includes('mmba') ? ['MMBA 10'] : userData.email.includes('emba') ? ['EMBA 15'] : ['MMBA 10', 'EMBA 15', 'MEMBA 8'];
                 setManager({ ...userData, assignedCohorts });
                 setIsLoggedIn(true);
+                showToast(`Access Granted: ${userData.name}`, 'success');
             };
 
-            const handleLogout = () => { setIsLoggedIn(false); setManager(null); setActiveView('overview'); setIsLive(false); };
-            const showToast = (msg, type = 'info') => { setToast({ visible: true, message: msg, type }); setTimeout(() => setToast({ visible: false }), 4000); };
+            const handleLogout = () => { setIsLoggedIn(false); setManager(null); setActiveView('overview'); setIsLive(false); showToast("Signed out successfully"); };
+            const showToast = (msg, type = 'info') => { setToast({ visible: true, message: msg, type }); setTimeout(() => setToast({ visible: false, message: '', type: 'info' }), 4000); };
             const toggleAttendee = (studentId) => {
-                if (currentAttendees.includes(studentId)) setCurrentAttendees(prev => prev.filter(id => id !== studentId));
-                else setCurrentAttendees(prev => [...prev, studentId]);
+                if (currentAttendees.includes(studentId)) { setCurrentAttendees(prev => prev.filter(id => id !== studentId)); } 
+                else { setCurrentAttendees(prev => [...prev, studentId]); showToast("Attendee Verified"); }
             };
 
             if (!isLoggedIn) return <LoginPortal onLoginSuccess={handleLoginSuccess} showToast={showToast} />;
 
             return (
                 <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
-                    <aside className="w-72 bg-slate-950 text-white fixed h-full flex flex-col z-40 border-r border-white/5">
+                    <aside className="w-72 bg-slate-950 text-white fixed h-full flex flex-col z-40 border-r border-white/5 shadow-2xl">
                         <div className="p-8 flex items-center gap-3">
                             <div className="bg-blue-600 p-2.5 rounded-xl"><Icon name="graduation-cap" className="text-white" /></div>
                             <span className="font-black text-xl tracking-tighter uppercase italic">AttendX</span>
@@ -89,9 +90,13 @@
                             <NavItem active={!isLive && activeView === 'courses'} onClick={() => {setActiveView('courses'); setIsLive(false)}} icon="book-marked" label="Module Catalog" />
                             <NavItem active={!isLive && activeView === 'reports'} onClick={() => {setActiveView('reports'); setIsLive(false)}} icon="file-bar-chart" label="Attendance Reports" />
                         </nav>
-                        <div className="p-6">
-                            <button onClick={() => setIsLive(true)} className="w-full py-4 rounded-2xl bg-blue-50/10 text-blue-400 font-black text-xs flex items-center justify-center gap-2"><Icon name="radio" size={16}/> LIVE SESSION</button>
-                            <button onClick={handleLogout} className="w-full py-4 rounded-2xl text-slate-500 font-black text-xs flex items-center justify-center gap-2"><Icon name="log-out" size={16}/> SIGN OUT</button>
+                        <div className="p-6 space-y-3">
+                            <button onClick={() => setIsLive(true)} className={`w-full py-4 rounded-2xl font-black text-xs tracking-widest flex items-center justify-center gap-2 border transition-all ${isLive ? 'bg-emerald-500 text-white' : 'bg-blue-50/10 text-blue-400'}`}>
+                                <Icon name="radio" size={16} /> LIVE SESSION
+                            </button>
+                            <button onClick={handleLogout} className="w-full py-4 rounded-2xl font-black text-xs text-slate-500 hover:text-white flex items-center justify-center gap-2">
+                                <Icon name="log-out" size={16} /> SIGN OUT
+                            </button>
                         </div>
                     </aside>
                     <main className="ml-72 flex-1 p-10">
@@ -107,24 +112,82 @@
         };
 
         const NavItem = ({ active, onClick, icon, label }) => (
-            <button onClick={onClick} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all font-bold text-sm ${active ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+            <button onClick={onClick} className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all font-bold text-sm ${active ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}>
                 <Icon name={icon} /> {label}
             </button>
         );
 
-        // --- Other Components (Simplified for structure) ---
         const LoginPortal = ({ onLoginSuccess, showToast }) => (
-            <div className="min-h-screen flex items-center justify-center bg-slate-950">
-                <button onClick={() => onLoginSuccess({name: 'Manager', email: 'mmba@lbs.edu.ng'})} className="bg-white text-black px-10 py-6 rounded-[2rem] font-black uppercase tracking-widest">Sign in with Google</button>
+            <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 text-center">
+                <div className="bg-white/10 backdrop-blur-3xl border border-white/10 p-16 rounded-[4rem] text-white">
+                    <h1 className="text-4xl font-black italic uppercase mb-8">AttendX Portal</h1>
+                    <button onClick={() => onLoginSuccess({name: 'Manager', email: 'mmba@lbs.edu.ng'})} className="bg-white text-slate-950 py-6 px-12 rounded-[2rem] font-black uppercase tracking-widest">Sign in with Google</button>
+                </div>
             </div>
         );
 
-        const OverviewView = ({ students, courses }) => <div className="text-4xl font-black">Welcome Back, Manager.</div>;
-        const RegistryView = ({ students }) => <div className="text-4xl font-black">Registry View</div>;
-        const CoursesView = ({ courses, onViewRoster }) => <div className="text-4xl font-black">Catalog View</div>;
-        const ReportsView = ({ students, courses, attendanceData }) => <div className="text-4xl font-black">Reports View</div>;
-        const LiveSessionView = ({ course, students, currentAttendees, toggleAttendee, endSession }) => <div className="text-4xl font-black">Live Session Active</div>;
-        const RosterOverlay = ({ course, students, onClose }) => <div className="fixed inset-0 bg-black/50 flex items-center justify-center" onClick={onClose}><div className="bg-white p-20 rounded-2xl">Roster</div></div>;
+        const OverviewView = ({ students, courses }) => (
+            <div className="space-y-10">
+                <h2 className="text-4xl font-black tracking-tight">Assigned Overview</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-10 rounded-[2.5rem] border"><p className="text-xs font-black uppercase text-slate-400">Your Students</p><h4 className="text-5xl font-black">{students.length}</h4></div>
+                    <div className="bg-white p-10 rounded-[2.5rem] border"><p className="text-xs font-black uppercase text-slate-400">Your Modules</p><h4 className="text-5xl font-black">{courses.length}</h4></div>
+                </div>
+            </div>
+        );
+
+        const RegistryView = ({ students }) => (
+            <div className="bg-white rounded-[2.5rem] p-10 border shadow-sm">
+                <h2 className="text-4xl font-black mb-6">Student Registry</h2>
+                <table className="w-full">
+                    <thead><tr className="text-[10px] font-black uppercase text-slate-400 border-b"><th className="pb-4">Name</th><th className="pb-4">Matric</th></tr></thead>
+                    <tbody className="divide-y">{students.map(s => <tr key={s.id}><td className="py-4 font-bold">{s.fname} {s.lname}</td><td className="py-4">{s.matric}</td></tr>)}</tbody>
+                </table>
+            </div>
+        );
+
+        const CoursesView = ({ courses, onViewRoster }) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {courses.map(course => (
+                    <div key={course.id} className="bg-white p-8 rounded-[2.5rem] border">
+                        <h4 className="text-xl font-black">{course.name}</h4>
+                        <button onClick={() => onViewRoster(course)} className="text-blue-600 font-bold mt-4 flex items-center gap-2">View Roster <Icon name="chevron-right" size={16}/></button>
+                    </div>
+                ))}
+            </div>
+        );
+
+        const ReportsView = ({ students, courses, attendanceData }) => (
+            <div className="bg-white p-10 rounded-[2.5rem] border">
+                <h2 className="text-4xl font-black mb-6">Attendance Reports</h2>
+                <table className="w-full">
+                    <thead><tr className="text-[10px] font-black uppercase text-slate-400 border-b"><th className="pb-4">Student</th><th className="pb-4">Sessions</th></tr></thead>
+                    <tbody className="divide-y">{students.map(s => <tr key={s.id}><td className="py-4 font-bold">{s.fname} {s.lname}</td><td className="py-4">{attendanceData[s.id]}</td></tr>)}</tbody>
+                </table>
+            </div>
+        );
+
+        const RosterOverlay = ({ course, students, onClose }) => (
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
+                <div className="bg-white p-10 rounded-[3rem] w-full max-w-lg" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-2xl font-black mb-6">{course.name} Roster</h3>
+                    <button onClick={onClose} className="bg-slate-100 px-6 py-3 rounded-xl font-bold">Close</button>
+                </div>
+            </div>
+        );
+
+        const LiveSessionView = ({ course, students, currentAttendees, toggleAttendee, endSession }) => (
+            <div className="space-y-8">
+                <header className="flex justify-between items-center"><h2 className="text-4xl font-black">Live: {course?.name}</h2><button onClick={endSession} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-xs">End Session</button></header>
+                <div className="grid grid-cols-2 gap-6">
+                    {students.map(s => (
+                        <div key={s.id} onClick={() => toggleAttendee(s.id)} className={`p-6 rounded-3xl cursor-pointer border-2 ${currentAttendees.includes(s.id) ? 'bg-emerald-50 border-emerald-500' : 'bg-white'}`}>
+                            <p className="font-black">{s.fname} {s.lname}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
