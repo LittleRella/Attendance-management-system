@@ -49,6 +49,10 @@
             0% { top: 0; }
             100% { top: 100%; }
         }
+
+        .risk-badge { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
+        .risk-red { @apply bg-red-100 text-red-600 border border-red-200; }
+        .risk-green { @apply bg-emerald-100 text-emerald-600 border border-emerald-200; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-[#1e293b] overflow-x-hidden" x-data="attendX()">
@@ -79,10 +83,10 @@
             <div class="bg-[#1e293b] p-6 rounded-[2.5rem] border border-white/5">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">System Status</p>
-                        <p class="text-[11px] font-bold text-emerald-400 mt-0.5 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                            Live Monitoring
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Threshold Policy</p>
+                        <p class="text-[11px] font-bold text-blue-400 mt-0.5 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                            60% Minimum Attendance
                         </p>
                     </div>
                 </div>
@@ -90,7 +94,6 @@
                     @click="activeView = 'activate'; selectedStudent = null"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-xs flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
                     GENERATE QR
                 </button>
             </div>
@@ -103,11 +106,10 @@
         <div x-show="!selectedStudent" class="flex justify-between items-start mb-12 animate-view">
             <div>
                 <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight" x-text="getViewTitle()"></h2>
-                <p class="text-slate-500 font-medium mt-1">Real-time engagement tracking and analytics.</p>
+                <p class="text-slate-500 font-medium mt-1">Real-time engagement tracking and 60% threshold monitoring.</p>
             </div>
             
             <div class="flex gap-4 items-center">
-                <!-- Cohort Selector -->
                 <div x-show="['overview', 'registry', 'matrix'].includes(activeView)" class="bg-white px-6 py-2.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Cohort</span>
                     <select x-model="selectedCohortName" class="text-sm font-bold bg-transparent outline-none cursor-pointer text-blue-600">
@@ -125,81 +127,105 @@
 
         <!-- VIEW: Overview -->
         <div x-show="activeView === 'overview' && !selectedStudent" class="space-y-8 animate-view">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Students</p>
                     <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStudents().length"></p>
                 </div>
                 <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Physical Attendance</p>
-                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStats().physicalTotal"></p>
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Cohort Avg</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="calculateCohortAvg() + '%'"></p>
                 </div>
-                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Virtual Attendance</p>
-                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStats().virtualTotal"></p>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm border-l-8 border-l-red-500">
+                    <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Below 60%</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getAtRiskCount()"></p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm border-l-8 border-l-blue-500">
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Eligible</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStudents().length - getAtRiskCount()"></p>
                 </div>
             </div>
 
             <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
                 <div class="flex justify-between items-center mb-10">
                     <div>
-                        <h4 class="text-xl font-extrabold text-slate-800" x-text="selectedCohortName + ' Attendance'"></h4>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Physical vs Virtual per Course</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase">Physical</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-emerald-400 rounded-full"></div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase">Virtual</span>
-                        </div>
+                        <h4 class="text-xl font-extrabold text-slate-800" x-text="selectedCohortName + ' Attendance Status'"></h4>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Students grouped by physical attendance yield</p>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 h-64 px-4">
-                    <template x-for="course in getCourseData()" :key="course.id">
-                        <div class="flex flex-col items-center group">
-                            <div class="flex-1 w-full flex items-end justify-center gap-2 mb-4">
-                                <div class="w-4 bg-blue-600 rounded-t-lg transition-all duration-700 relative group/p" :style="'height: ' + course.physicalPerc + '%'">
-                                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/p:opacity-100 transition-opacity whitespace-nowrap" x-text="course.physical + ' Physical'"></div>
+                <div class="space-y-4">
+                    <template x-for="s in getFilteredStudents()" :key="s.id">
+                        <div class="flex items-center gap-6 p-4 hover:bg-slate-50 rounded-2xl transition-all">
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-xs" x-text="s.fname[0] + s.lname[0]"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-xs font-bold text-slate-700" x-text="s.fname + ' ' + s.lname"></span>
+                                    <span class="text-xs font-black" :class="s.yield < 60 ? 'text-red-500' : 'text-emerald-500'" x-text="s.yield + '%'"></span>
                                 </div>
-                                <div class="w-4 bg-emerald-400 rounded-t-lg transition-all duration-700 relative group/v" :style="'height: ' + course.virtualPerc + '%'">
-                                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/v:opacity-100 transition-opacity whitespace-nowrap" x-text="course.virtual + ' Virtual'"></div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full transition-all duration-1000" :class="s.yield < 60 ? 'bg-red-500' : 'bg-emerald-500'" :style="'width: ' + s.yield + '%'"></div>
                                 </div>
                             </div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" x-text="course.code"></span>
+                            <div class="w-24 text-right">
+                                <span class="risk-badge" :class="s.yield < 60 ? 'risk-red' : 'risk-green'" x-text="s.yield < 60 ? 'At Risk' : 'Clear'"></span>
+                            </div>
                         </div>
                     </template>
                 </div>
             </div>
         </div>
 
-        <!-- VIEW: Courses -->
-        <div x-show="activeView === 'courses'" class="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm animate-view">
-            <div class="flex justify-between items-center mb-10">
-                <h3 class="text-2xl font-extrabold">Active Curriculum</h3>
-                <button @click="editingCourse = {id: Date.now(), name: '', code: ''}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">+ New Course</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <template x-for="course in courses" :key="course.id">
-                    <div class="flex items-center justify-between p-8 bg-slate-50/50 rounded-3xl border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-xl transition-all group">
-                        <div class="flex items-center gap-6">
-                            <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-                                <span class="font-black text-sm" x-text="course.code.substring(0,3)"></span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest" x-text="course.code"></span>
-                                <h4 class="font-extrabold text-lg text-slate-800" x-text="course.name"></h4>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click="editingCourse = {...course}" class="p-3 bg-white text-slate-400 hover:text-blue-600 rounded-xl shadow-sm border border-slate-100 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-                            <button @click="deleteCourse(course.id)" class="p-3 bg-white text-slate-400 hover:text-red-600 rounded-xl shadow-sm border border-slate-100 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
-                        </div>
+        <!-- VIEW: Matrix (Redesigned with 60% calculation) -->
+        <div x-show="activeView === 'matrix'" class="bg-white rounded-[3.5rem] shadow-sm border border-slate-100 overflow-hidden animate-view">
+            <div class="p-10 border-b border-slate-50 flex justify-between items-center">
+                <div>
+                    <h3 class="font-extrabold text-2xl">Attendance Matrix</h3>
+                    <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Physical sessions vs. 60% threshold</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="bg-red-50 px-4 py-2 rounded-xl border border-red-100 flex items-center gap-3">
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span class="text-[10px] font-black text-red-600 uppercase">Below 60%</span>
                     </div>
-                </template>
+                </div>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <tr>
+                            <th class="px-10 py-6 min-w-[200px]">Participant</th>
+                            <th class="px-6 py-6 text-center">Sessions</th>
+                            <th class="px-6 py-6 text-center">Yield</th>
+                            <template x-for="i in 10">
+                                <th class="px-4 py-6 text-center" x-text="'S' + i"></th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        <template x-for="student in getFilteredStudents()" :key="student.id">
+                            <tr class="hover:bg-slate-50/50 group transition-all" :class="student.yield < 60 ? 'bg-red-50/30' : ''">
+                                <td class="px-10 py-6">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></span>
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter" x-text="student.matric"></span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-6 text-center">
+                                    <span class="text-xs font-bold text-slate-500" x-text="Math.round((student.yield/100)*10) + '/10'"></span>
+                                </td>
+                                <td class="px-6 py-6 text-center">
+                                    <span class="text-xs font-black p-2 rounded-lg" :class="student.yield < 60 ? 'text-red-600 bg-red-100' : 'text-emerald-600 bg-emerald-100'" x-text="student.yield + '%'"></span>
+                                </td>
+                                <template x-for="i in 10">
+                                    <td class="px-4 py-6">
+                                        <div :class="(i <= Math.round((student.yield/100)*10)) ? 'bg-blue-600' : 'bg-slate-200'" class="w-3 h-3 rounded-full mx-auto transition-transform group-hover:scale-125"></div>
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -212,21 +238,12 @@
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Template Download -->
                     <button @click="downloadTemplate()" class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         Template
                     </button>
                     
-                    <!-- Bulk Upload (Hidden Input) -->
-                    <label class="cursor-pointer flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Bulk Upload
-                        <input type="file" @change="handleBulkUpload($event)" class="hidden" accept=".csv">
-                    </label>
-
                     <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: selectedCohortName, yield: 0}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Student
                     </button>
                 </div>
@@ -237,7 +254,7 @@
                     <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         <tr>
                             <th class="px-10 py-6">Identity</th>
-                            <th class="px-10 py-6">Matric Number</th>
+                            <th class="px-10 py-6">Compliance</th>
                             <th class="px-10 py-6">Active Cohort</th>
                             <th class="px-10 py-6 text-right">Actions</th>
                         </tr>
@@ -250,12 +267,12 @@
                                         <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-black text-sm group-hover/btn:bg-blue-600 group-hover/btn:text-white transition-all shadow-sm" x-text="s.fname[0] + s.lname[0]"></div>
                                         <div class="text-left">
                                             <div class="font-bold text-slate-900 group-hover/btn:text-blue-600" x-text="s.fname + ' ' + s.lname"></div>
-                                            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">View Profile</div>
+                                            <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest" x-text="s.matric"></div>
                                         </div>
                                     </button>
                                 </td>
                                 <td class="px-10 py-6">
-                                    <span class="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 font-mono tracking-tighter" x-text="s.matric"></span>
+                                    <span class="risk-badge" :class="s.yield < 60 ? 'risk-red' : 'risk-green'" x-text="s.yield + '% Attendance'"></span>
                                 </td>
                                 <td class="px-10 py-6">
                                     <span class="text-sm font-bold text-slate-600" x-text="s.cohort"></span>
@@ -273,41 +290,6 @@
             </div>
         </div>
 
-        <!-- VIEW: Matrix -->
-        <div x-show="activeView === 'matrix'" class="bg-white rounded-[3.5rem] shadow-sm border border-slate-100 overflow-hidden animate-view">
-            <div class="p-10 border-b border-slate-50 flex justify-between items-center">
-                <h3 class="font-extrabold text-2xl">Session Matrix</h3>
-                <div class="flex gap-2">
-                    <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase"><span class="w-2.5 h-2.5 bg-blue-600 rounded-full"></span> Present</span>
-                    <span class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase ml-4"><span class="w-2.5 h-2.5 bg-slate-200 rounded-full"></span> Absent</span>
-                </div>
-            </div>
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        <tr>
-                            <th class="px-10 py-6 min-w-[240px]">Participant</th>
-                            <template x-for="i in 12">
-                                <th class="px-4 py-6 text-center" x-text="'W' + i"></th>
-                            </template>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        <template x-for="student in getFilteredStudents()" :key="student.id">
-                            <tr class="hover:bg-slate-50/50 group">
-                                <td class="px-10 py-6 font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></td>
-                                <template x-for="i in 12">
-                                    <td class="px-4 py-6">
-                                        <div :class="Math.random() > 0.15 ? 'bg-blue-600' : 'bg-slate-200'" class="w-3 h-3 rounded-full mx-auto transition-transform group-hover:scale-125"></div>
-                                    </td>
-                                </template>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         <!-- PROFILE VIEW -->
         <template x-if="selectedStudent">
             <div class="animate-view">
@@ -317,14 +299,14 @@
                 </button>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     <div class="col-span-1 bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm text-center">
-                        <div class="w-32 h-32 bg-blue-600 rounded-[3rem] mx-auto mb-10 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-blue-200" x-text="selectedStudent.fname[0] + selectedStudent.lname[0]"></div>
+                        <div class="w-32 h-32 rounded-[3rem] mx-auto mb-10 flex items-center justify-center text-white text-4xl font-black shadow-2xl" :class="selectedStudent.yield < 60 ? 'bg-red-500 shadow-red-200' : 'bg-blue-600 shadow-blue-200'" x-text="selectedStudent.fname[0] + selectedStudent.lname[0]"></div>
                         <h3 class="text-3xl font-extrabold text-slate-900" x-text="selectedStudent.fname + ' ' + selectedStudent.lname"></h3>
                         <p class="text-blue-600 font-black text-sm uppercase tracking-widest mt-3" x-text="selectedStudent.matric"></p>
                         
                         <div class="grid grid-cols-2 gap-4 mt-12">
                             <div class="bg-slate-50 p-6 rounded-3xl">
-                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
-                                <p class="font-bold text-emerald-600">Active</p>
+                                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Threshold</p>
+                                <p class="font-bold" :class="selectedStudent.yield < 60 ? 'text-red-600' : 'text-emerald-600'" x-text="selectedStudent.yield < 60 ? 'Below 60%' : 'Compliant'"></p>
                             </div>
                             <div class="bg-slate-50 p-6 rounded-3xl">
                                 <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Cohort</p>
@@ -335,15 +317,15 @@
                     
                     <div class="col-span-2 space-y-8">
                         <div class="bg-white p-12 rounded-[4rem] shadow-sm border border-slate-100 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-                            <h4 class="font-black text-xs uppercase text-slate-400 mb-8 tracking-widest relative">Engagement Yield</h4>
+                            <div class="absolute top-0 right-0 w-64 h-64 bg-slate-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                            <h4 class="font-black text-xs uppercase text-slate-400 mb-8 tracking-widest relative">Physical Attendance Yield</h4>
                             <div class="flex items-end gap-12 relative">
-                                <span class="text-8xl font-black text-slate-900 tracking-tighter" x-text="selectedStudent.yield + '%'"></span>
+                                <span class="text-8xl font-black tracking-tighter" :class="selectedStudent.yield < 60 ? 'text-red-500' : 'text-slate-900'" x-text="selectedStudent.yield + '%'"></span>
                                 <div class="flex-1 pb-4">
                                     <div class="h-5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                                        <div class="h-full bg-blue-600 transition-all duration-1000" :style="'width: ' + selectedStudent.yield + '%'"></div>
+                                        <div class="h-full transition-all duration-1000" :class="selectedStudent.yield < 60 ? 'bg-red-500' : 'bg-blue-600'" :style="'width: ' + selectedStudent.yield + '%'"></div>
                                     </div>
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-4">Calculated from 24 active sessions</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-4">Minimum 60% required for assessment eligibility</p>
                                 </div>
                             </div>
                         </div>
@@ -363,20 +345,19 @@
                     <p class="mt-8 text-[10px] font-black text-slate-400 group-hover:text-blue-600 tracking-widest transition-colors">SCAN TO JOIN SESSION</p>
                 </div>
             </div>
-
+            
+            <!-- Mobile Preview Mockup -->
             <div class="relative pt-12 flex justify-center">
-                <div class="absolute top-0 bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase z-20 shadow-2xl shadow-blue-500/40">Participant View (Sarah)</div>
-                <div class="bg-[#0f172a] w-[340px] h-[680px] rounded-[4.5rem] p-4 border-[12px] border-slate-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden relative">
+                <div class="bg-[#0f172a] w-[340px] h-[680px] rounded-[4.5rem] p-4 border-[12px] border-slate-800 shadow-2xl overflow-hidden relative">
                     <div class="bg-white h-full rounded-[3.8rem] flex flex-col p-10">
                         <div class="flex justify-between items-center mb-16">
-                            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-[1.8rem] flex items-center justify-center shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-[1.4rem] flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                             </div>
-                            <div class="w-10 h-10 rounded-full border-2 border-slate-100 bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400">SJ</div>
                         </div>
                         <h4 class="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-3">Welcome,<br/>Sarah!</h4>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-14">Live session detected</p>
-                        <button class="mt-auto bg-blue-600 text-white w-full py-7 rounded-[3rem] font-black text-xs tracking-widest shadow-2xl shadow-blue-500/40 active:scale-95 transition-all">START SCANNING</button>
+                        <button class="mt-auto bg-blue-600 text-white w-full py-7 rounded-[3rem] font-black text-xs tracking-widest shadow-2xl shadow-blue-500/40">START SCANNING</button>
                     </div>
                 </div>
             </div>
@@ -387,37 +368,16 @@
     <template x-if="editingStudent">
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
             <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
-                <h3 class="text-3xl font-extrabold mb-10 tracking-tight" x-text="editingStudent.id > 1700000000000 ? 'Onboard Student' : 'Edit Student'"></h3>
+                <h3 class="text-3xl font-extrabold mb-10 tracking-tight" x-text="editingStudent.id > Date.now()-10000 ? 'Onboard Student' : 'Edit Student'"></h3>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <input x-model="editingStudent.fname" placeholder="First Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
                         <input x-model="editingStudent.lname" placeholder="Last Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
                     </div>
                     <input x-model="editingStudent.matric" placeholder="Matric No" class="w-full bg-slate-50 p-5 rounded-2xl font-mono font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    <select x-model="editingStudent.cohort" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all">
-                        <template x-for="c in cohorts">
-                            <option :value="c.name" x-text="c.name"></option>
-                        </template>
-                    </select>
                     <div class="flex gap-4 pt-8">
                         <button @click="editingStudent = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Cancel</button>
                         <button @click="saveStudent()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Finalize</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <template x-if="editingCourse">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
-                <h3 class="text-3xl font-extrabold mb-10 tracking-tight">Curriculum Detail</h3>
-                <div class="space-y-4">
-                    <input x-model="editingCourse.code" placeholder="Course Code" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    <input x-model="editingCourse.name" placeholder="Full Title" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
-                    <div class="flex gap-4 pt-8">
-                        <button @click="editingCourse = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Cancel</button>
-                        <button @click="saveCourse()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Save Changes</button>
                     </div>
                 </div>
             </div>
@@ -428,131 +388,56 @@
         function attendX() {
             return {
                 activeView: 'overview',
-                selectedCohortName: 'MMBA 10',
+                selectedCohortName: 'Cohort A (2024)',
                 selectedStudent: null,
                 editingStudent: null,
-                editingCourse: null,
                 
                 menuItems: [
-                    { id: 'overview', label: 'Overview', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>' },
-                    { id: 'registry', label: 'Registry', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
-                    { id: 'matrix', label: 'Matrix', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>' },
-                    { id: 'courses', label: 'Courses', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' }
+                    { id: 'overview', label: 'Overview', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+                    { id: 'registry', label: 'Registry', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+                    { id: 'matrix', label: 'Session Matrix', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/></svg>' }
                 ],
 
                 cohorts: [
-                    { name: 'MMBA 10', avg: 88 },
-                    { name: 'MPP 04', avg: 74 },
-                    { name: 'EMBA 12', avg: 92 }
-                ],
-
-                courses: [
-                    { id: 1, code: 'BUS701', name: 'Strategic Management' },
-                    { id: 2, code: 'ECO705', name: 'Managerial Economics' },
-                    { id: 3, code: 'FIN712', name: 'Corporate Finance' },
-                    { id: 4, code: 'MKT708', name: 'Marketing Strategy' }
-                ],
-
-                attendanceRecords: [
-                    { courseId: 1, cohort: 'MMBA 10', physical: 45, virtual: 15 },
-                    { courseId: 2, cohort: 'MMBA 10', physical: 38, virtual: 22 },
-                    { courseId: 3, cohort: 'MMBA 10', physical: 50, virtual: 10 },
-                    { courseId: 4, cohort: 'MMBA 10', physical: 30, virtual: 25 },
-                    { courseId: 1, cohort: 'MPP 04', physical: 20, virtual: 30 },
-                    { courseId: 2, cohort: 'MPP 04', physical: 25, virtual: 35 },
-                    { courseId: 1, cohort: 'EMBA 12', physical: 60, virtual: 5 },
-                    { courseId: 2, cohort: 'EMBA 12', physical: 55, virtual: 10 }
+                    { name: 'Cohort A (2024)' },
+                    { name: 'Cohort B (2024)' }
                 ],
 
                 students: [
-                    { id: 1, fname: 'Sarah', lname: 'Johnson', matric: '24/MMBA/001', cohort: 'MMBA 10', yield: 95 },
-                    { id: 2, fname: 'Michael', lname: 'Chen', matric: '24/MMBA/002', cohort: 'MMBA 10', yield: 82 },
-                    { id: 3, fname: 'Aisha', lname: 'Bello', matric: '24/MPP/001', cohort: 'MPP 04', yield: 78 },
-                    { id: 4, fname: 'David', lname: 'Okonkwo', matric: '24/EMBA/012', cohort: 'EMBA 12', yield: 91 },
-                    { id: 5, fname: 'Elena', lname: 'Rodriguez', matric: '24/MMBA/003', cohort: 'MMBA 10', yield: 88 }
+                    { id: 1, fname: 'James', lname: 'Wilson', matric: 'MAT/24/001', cohort: 'Cohort A (2024)', yield: 85 },
+                    { id: 2, fname: 'Maria', lname: 'Garcia', matric: 'MAT/24/002', cohort: 'Cohort A (2024)', yield: 42 },
+                    { id: 3, fname: 'David', lname: 'Lee', matric: 'MAT/24/003', cohort: 'Cohort A (2024)', yield: 58 },
+                    { id: 4, fname: 'Sarah', lname: 'Jones', matric: 'MAT/24/004', cohort: 'Cohort A (2024)', yield: 92 },
+                    { id: 5, fname: 'Kevin', lname: 'Brown', matric: 'MAT/24/005', cohort: 'Cohort A (2024)', yield: 35 },
+                    { id: 6, fname: 'Amara', lname: 'Okonkwo', matric: 'MAT/24/006', cohort: 'Cohort B (2024)', yield: 78 }
                 ],
+
+                getViewTitle() {
+                    const item = this.menuItems.find(i => i.id === this.activeView);
+                    return item ? item.label : 'Dashboard';
+                },
 
                 getFilteredStudents() {
                     return this.students.filter(s => s.cohort === this.selectedCohortName);
                 },
 
-                getFilteredStats() {
-                    const records = this.attendanceRecords.filter(r => r.cohort === this.selectedCohortName);
-                    return {
-                        physicalTotal: records.reduce((sum, r) => sum + r.physical, 0),
-                        virtualTotal: records.reduce((sum, r) => sum + r.virtual, 0)
-                    };
+                calculateCohortAvg() {
+                    const filtered = this.getFilteredStudents();
+                    if (filtered.length === 0) return 0;
+                    const total = filtered.reduce((acc, s) => acc + s.yield, 0);
+                    return Math.round(total / filtered.length);
                 },
 
-                getCourseData() {
-                    const stats = this.getFilteredStats();
-                    const cohortRecords = this.attendanceRecords.filter(r => r.cohort === this.selectedCohortName);
-                    const max = Math.max(...cohortRecords.map(r => Math.max(r.physical, r.virtual)), 1);
-                    
-                    return this.courses.map(course => {
-                        const record = cohortRecords.find(r => r.courseId === course.id) || { physical: 0, virtual: 0 };
-                        return {
-                            ...course,
-                            physical: record.physical,
-                            virtual: record.virtual,
-                            physicalPerc: (record.physical / max) * 100,
-                            virtualPerc: (record.virtual / max) * 100
-                        };
-                    });
-                },
-
-                getViewTitle() {
-                    if (this.selectedStudent) return 'Student Profile';
-                    const map = { overview: 'Dashboard', registry: 'Registry', matrix: 'Attendance Matrix', courses: 'Curriculum', activate: 'Session Control' };
-                    return map[this.activeView];
-                },
-
-                // Template and Upload Logic
-                downloadTemplate() {
-                    const csv = "fname,lname,matric,cohort\nJohn,Doe,24/DEPT/001," + this.selectedCohortName;
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.setAttribute('href', url);
-                    a.setAttribute('download', 'attendx_template.csv');
-                    a.click();
-                },
-
-                handleBulkUpload(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const text = e.target.result;
-                        const lines = text.split('\n');
-                        const header = lines[0].split(',');
-                        
-                        // Simple parser for CSV
-                        for (let i = 1; i < lines.length; i++) {
-                            const data = lines[i].split(',');
-                            if (data.length >= 4) {
-                                this.students.push({
-                                    id: Date.now() + i,
-                                    fname: data[0].trim(),
-                                    lname: data[1].trim(),
-                                    matric: data[2].trim(),
-                                    cohort: data[3].trim(),
-                                    yield: Math.floor(Math.random() * 100)
-                                });
-                            }
-                        }
-                    };
-                    reader.readAsText(file);
+                getAtRiskCount() {
+                    return this.getFilteredStudents().filter(s => s.yield < 60).length;
                 },
 
                 saveStudent() {
-                    if (!this.editingStudent.fname || !this.editingStudent.lname) return;
-                    const index = this.students.findIndex(s => s.id === this.editingStudent.id);
-                    if (index > -1) {
-                        this.students[index] = { ...this.editingStudent };
+                    if (this.editingStudent.id > Date.now() - 100000) {
+                        this.students.push(this.editingStudent);
                     } else {
-                        this.students.push({ ...this.editingStudent });
+                        const index = this.students.findIndex(s => s.id === this.editingStudent.id);
+                        this.students[index] = this.editingStudent;
                     }
                     this.editingStudent = null;
                 },
@@ -561,19 +446,15 @@
                     this.students = this.students.filter(s => s.id !== id);
                 },
 
-                saveCourse() {
-                    if (!this.editingCourse.name || !this.editingCourse.code) return;
-                    const index = this.courses.findIndex(c => c.id === this.editingCourse.id);
-                    if (index > -1) {
-                        this.courses[index] = { ...this.editingCourse };
-                    } else {
-                        this.courses.push({ ...this.editingCourse });
-                    }
-                    this.editingCourse = null;
-                },
-
-                deleteCourse(id) {
-                    this.courses = this.courses.filter(c => c.id !== id);
+                downloadTemplate() {
+                    const csvContent = "data:text/csv;charset=utf-8,FirstName,LastName,MatricNumber,Cohort\nJohn,Doe,MAT/24/XXX,Cohort A (2024)";
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "attendx_template.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
             }
         }
