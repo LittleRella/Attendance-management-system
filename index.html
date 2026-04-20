@@ -26,14 +26,8 @@
             box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
         }
 
-        .bar-anim {
-            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .animate-view {
+            animation: fadeIn 0.4s ease-out forwards;
         }
 
         @keyframes fadeIn {
@@ -41,8 +35,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .animate-view {
-            animation: fadeIn 0.4s ease-out forwards;
+        .qr-scanner-line {
+            height: 2px;
+            background: #2563eb;
+            box-shadow: 0 0 15px #2563eb;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            animation: scan 2s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
         }
     </style>
 </head>
@@ -61,7 +66,7 @@
             <template x-for="item in menuItems" :key="item.id">
                 <button 
                     @click="activeView = item.id; selectedStudent = null"
-                    :class="activeView === item.id && !selectedStudent ? 'sidebar-item-active' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
+                    :class="(activeView === item.id && !selectedStudent) ? 'sidebar-item-active' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
                     class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-sm text-left group"
                 >
                     <span class="transition-transform group-hover:scale-110" x-html="item.icon"></span>
@@ -70,7 +75,6 @@
             </template>
         </nav>
 
-        <!-- Bottom Actions -->
         <div class="px-6 mb-8">
             <div class="bg-[#1e293b] p-6 rounded-[2.5rem] border border-white/5">
                 <div class="flex items-center justify-between mb-6">
@@ -93,10 +97,9 @@
         </div>
     </aside>
 
-    <!-- Main Content Area -->
     <main class="ml-[280px] p-10 min-h-screen">
         
-        <!-- View Header -->
+        <!-- Header -->
         <div x-show="!selectedStudent" class="flex justify-between items-start mb-12 animate-view">
             <div>
                 <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight" x-text="getViewTitle()"></h2>
@@ -104,52 +107,73 @@
             </div>
             
             <div class="flex gap-4 items-center">
+                <!-- Cohort Selector -->
+                <div x-show="['overview', 'registry', 'matrix'].includes(activeView)" class="bg-white px-6 py-2.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Cohort</span>
+                    <select x-model="selectedCohortName" class="text-sm font-bold bg-transparent outline-none cursor-pointer text-blue-600">
+                        <template x-for="c in cohorts" :key="c.name">
+                            <option :value="c.name" x-text="c.name"></option>
+                        </template>
+                    </select>
+                </div>
                 <div class="bg-white px-6 py-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Session Date</span>
-                    <span class="text-sm font-bold">Apr 19, 2026</span>
-                </div>
-                <div class="bg-white px-5 py-3.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3 group cursor-pointer hover:border-blue-200 transition-colors">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filter</span>
-                    <select class="text-sm font-bold text-blue-600 bg-transparent border-none outline-none appearance-none cursor-pointer">
-                        <option>Current Semester</option>
-                        <option>Full Year</option>
-                    </select>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="m6 9 6 6 6-6"/></svg>
+                    <span class="text-sm font-bold" x-text="new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
                 </div>
             </div>
         </div>
 
         <!-- VIEW: Overview -->
-        <div x-show="activeView === 'overview' && !selectedStudent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-view">
-            <template x-for="cohort in cohorts" :key="cohort.name">
-                <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all group">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h4 class="text-xl font-extrabold text-slate-800" x-text="cohort.name"></h4>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Cohort Performance</p>
-                        </div>
-                        <span class="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-widest">Active</span>
-                    </div>
-                    
-                    <div class="flex items-end justify-between h-32 gap-3 mb-8 px-2">
-                        <template x-for="h in cohort.bars">
-                            <div class="flex-1 bg-slate-100 rounded-lg relative overflow-hidden h-full group/bar">
-                                <div class="absolute bottom-0 left-0 right-0 bg-blue-600 rounded-lg transition-all duration-1000 ease-out group-hover:bg-blue-500" :style="'height: ' + h + '%'"></div>
-                            </div>
-                        </template>
-                    </div>
+        <div x-show="activeView === 'overview' && !selectedStudent" class="space-y-8 animate-view">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Students</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStudents().length"></p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Physical Attendance</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStats().physicalTotal"></p>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest">Virtual Attendance</p>
+                    <p class="text-4xl font-extrabold text-slate-900 mt-2" x-text="getFilteredStats().virtualTotal"></p>
+                </div>
+            </div>
 
-                    <div class="pt-8 border-t border-slate-50 flex items-end justify-between">
-                        <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg. Attendance</p>
-                            <p class="text-4xl font-extrabold mt-1 text-slate-900" x-text="cohort.avg + '%'"></p>
+            <div class="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                <div class="flex justify-between items-center mb-10">
+                    <div>
+                        <h4 class="text-xl font-extrabold text-slate-800" x-text="selectedCohortName + ' Attendance'"></h4>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Physical vs Virtual per Course</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-blue-600 rounded-full"></div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Physical</span>
                         </div>
-                        <div class="w-12 h-12 rounded-full border-4 border-slate-100 flex items-center justify-center text-[10px] font-black text-blue-600" :style="'background: conic-gradient(#2563eb ' + cohort.avg + '%, transparent 0)'">
-                            <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center" x-text="cohort.avg"></div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-emerald-400 rounded-full"></div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase">Virtual</span>
                         </div>
                     </div>
                 </div>
-            </template>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 h-64 px-4">
+                    <template x-for="course in getCourseData()" :key="course.id">
+                        <div class="flex flex-col items-center group">
+                            <div class="flex-1 w-full flex items-end justify-center gap-2 mb-4">
+                                <div class="w-4 bg-blue-600 rounded-t-lg transition-all duration-700 relative group/p" :style="'height: ' + course.physicalPerc + '%'">
+                                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/p:opacity-100 transition-opacity whitespace-nowrap" x-text="course.physical + ' Physical'"></div>
+                                </div>
+                                <div class="w-4 bg-emerald-400 rounded-t-lg transition-all duration-700 relative group/v" :style="'height: ' + course.virtualPerc + '%'">
+                                    <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/v:opacity-100 transition-opacity whitespace-nowrap" x-text="course.virtual + ' Virtual'"></div>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter" x-text="course.code"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
 
         <!-- VIEW: Courses -->
@@ -181,15 +205,33 @@
 
         <!-- VIEW: Registry -->
         <div x-show="activeView === 'registry' && !selectedStudent" class="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden animate-view">
-            <div class="p-10 flex justify-between items-center border-b border-slate-50 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+            <div class="p-10 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-50 bg-white/50 backdrop-blur-md sticky top-0 z-10 gap-6">
                 <div>
                     <h3 class="font-extrabold text-2xl">Student Directory</h3>
-                    <p class="text-xs font-bold text-slate-400 mt-1" x-text="students.length + ' students enrolled'"></p>
+                    <p class="text-xs font-bold text-slate-400 mt-1" x-text="getFilteredStudents().length + ' students in ' + selectedCohortName"></p>
                 </div>
-                <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: 'MMBA 10', yield: 100}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                    + Add Student
-                </button>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Template Download -->
+                    <button @click="downloadTemplate()" class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-600 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Template
+                    </button>
+                    
+                    <!-- Bulk Upload (Hidden Input) -->
+                    <label class="cursor-pointer flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Bulk Upload
+                        <input type="file" @change="handleBulkUpload($event)" class="hidden" accept=".csv">
+                    </label>
+
+                    <button @click="editingStudent = {id: Date.now(), fname: '', lname: '', matric: '', cohort: selectedCohortName, yield: 0}" class="bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Student
+                    </button>
+                </div>
             </div>
+            
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -201,7 +243,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        <template x-for="s in students" :key="s.id">
+                        <template x-for="s in getFilteredStudents()" :key="s.id">
                             <tr class="hover:bg-blue-50/30 transition-all group">
                                 <td class="px-10 py-6">
                                     <button @click="selectedStudent = s" class="flex items-center gap-4 group/btn outline-none">
@@ -251,12 +293,12 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        <template x-for="student in students" :key="student.id">
+                        <template x-for="student in getFilteredStudents()" :key="student.id">
                             <tr class="hover:bg-slate-50/50 group">
                                 <td class="px-10 py-6 font-bold text-sm text-slate-700" x-text="student.fname + ' ' + student.lname"></td>
                                 <template x-for="i in 12">
                                     <td class="px-4 py-6">
-                                        <div :class="Math.random() > 0.2 ? 'bg-blue-600' : 'bg-slate-200'" class="w-3 h-3 rounded-full mx-auto transition-transform group-hover:scale-125"></div>
+                                        <div :class="Math.random() > 0.15 ? 'bg-blue-600' : 'bg-slate-200'" class="w-3 h-3 rounded-full mx-auto transition-transform group-hover:scale-125"></div>
                                     </td>
                                 </template>
                             </tr>
@@ -266,7 +308,7 @@
             </div>
         </div>
 
-        <!-- VIEW: Profile (Single Student) -->
+        <!-- PROFILE VIEW -->
         <template x-if="selectedStudent">
             <div class="animate-view">
                 <button @click="selectedStudent = null" class="flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-xs uppercase tracking-widest mb-10 transition-colors group">
@@ -305,55 +347,23 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="bg-slate-900 p-12 rounded-[4rem] text-white">
-                            <h4 class="font-black text-xs uppercase text-white/30 mb-8 tracking-widest">Attendance History</h4>
-                            <div class="space-y-4">
-                                <template x-for="i in 3">
-                                    <div class="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5">
-                                        <div class="flex items-center gap-4">
-                                            <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold">Strategic Management Session</p>
-                                                <p class="text-[10px] font-black text-white/40 uppercase">Week 0<span x-text="i"></span> • 9:32 AM</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-emerald-400 font-black text-[10px] uppercase">Verified</span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </template>
 
-        <!-- VIEW: Activate (QR Generation) -->
+        <!-- VIEW: Activate -->
         <div x-show="activeView === 'activate'" class="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start animate-view">
             <div class="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm text-center">
                 <h3 class="text-3xl font-extrabold mb-4 tracking-tight">Active Class Session</h3>
                 <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mb-10">DYNAMIC AUTHENTICATION TOKEN</p>
                 <div class="p-12 bg-slate-50 rounded-[4rem] border-4 border-dashed border-slate-200 aspect-square max-w-[400px] mx-auto flex flex-col items-center justify-center group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors"></div>
+                    <div class="qr-scanner-line"></div>
                     <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300 group-hover:text-blue-600 group-hover:scale-110 transition-all duration-500"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M11 3v4"/><path d="M11 11v-3"/><path d="M16 11h5"/><path d="M13 21h3"/></svg>
                     <p class="mt-8 text-[10px] font-black text-slate-400 group-hover:text-blue-600 tracking-widest transition-colors">SCAN TO JOIN SESSION</p>
                 </div>
-                <div class="mt-12 flex justify-center gap-8">
-                    <div class="text-center">
-                        <p class="text-3xl font-black text-slate-900">42</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Joined</p>
-                    </div>
-                    <div class="w-px h-10 bg-slate-100 mt-2"></div>
-                    <div class="text-center">
-                        <p class="text-3xl font-black text-blue-600">08:14</p>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Time Left</p>
-                    </div>
-                </div>
             </div>
 
-            <!-- Student App Simulation -->
             <div class="relative pt-12 flex justify-center">
                 <div class="absolute top-0 bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase z-20 shadow-2xl shadow-blue-500/40">Participant View (Sarah)</div>
                 <div class="bg-[#0f172a] w-[340px] h-[680px] rounded-[4.5rem] p-4 border-[12px] border-slate-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden relative">
@@ -362,21 +372,10 @@
                             <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-[1.8rem] flex items-center justify-center shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                             </div>
-                            <div class="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden">
-                                <div class="w-full h-full bg-slate-200"></div>
-                            </div>
+                            <div class="w-10 h-10 rounded-full border-2 border-slate-100 bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400">SJ</div>
                         </div>
                         <h4 class="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-3">Welcome,<br/>Sarah!</h4>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-14">Live session detected</p>
-                        
-                        <div class="bg-slate-50 p-8 rounded-[3rem] border border-slate-100 mb-8 relative group overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4">
-                                <div class="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
-                            </div>
-                            <p class="text-[9px] font-black text-blue-600 uppercase mb-3 tracking-widest">Ongoing</p>
-                            <h5 class="font-bold text-xl text-slate-900 leading-tight">Strategic Mgmt.<br/><span class="text-slate-400 text-sm font-medium">BUS701 • 9:00 AM</span></h5>
-                        </div>
-                        
                         <button class="mt-auto bg-blue-600 text-white w-full py-7 rounded-[3rem] font-black text-xs tracking-widest shadow-2xl shadow-blue-500/40 active:scale-95 transition-all">START SCANNING</button>
                     </div>
                 </div>
@@ -385,23 +384,21 @@
     </main>
 
     <!-- Modals -->
-    <!-- Student Edit Modal -->
     <template x-if="editingStudent">
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
             <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
-                <h3 class="text-3xl font-extrabold mb-10 tracking-tight" x-text="editingStudent.matric ? 'Edit Student' : 'Onboard Student'"></h3>
+                <h3 class="text-3xl font-extrabold mb-10 tracking-tight" x-text="editingStudent.id > 1700000000000 ? 'Onboard Student' : 'Edit Student'"></h3>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <input x-model="editingStudent.fname" placeholder="First Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
                         <input x-model="editingStudent.lname" placeholder="Last Name" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
                     </div>
-                    <input x-model="editingStudent.matric" placeholder="Matric No (e.g. 24/MMBA/001)" class="w-full bg-slate-50 p-5 rounded-2xl font-mono font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
+                    <input x-model="editingStudent.matric" placeholder="Matric No" class="w-full bg-slate-50 p-5 rounded-2xl font-mono font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
                     <select x-model="editingStudent.cohort" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all">
                         <template x-for="c in cohorts">
                             <option :value="c.name" x-text="c.name"></option>
                         </template>
                     </select>
-                    
                     <div class="flex gap-4 pt-8">
                         <button @click="editingStudent = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Cancel</button>
                         <button @click="saveStudent()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Finalize</button>
@@ -411,16 +408,15 @@
         </div>
     </template>
 
-    <!-- Course Edit Modal -->
     <template x-if="editingCourse">
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
             <div class="bg-white w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl animate-view">
                 <h3 class="text-3xl font-extrabold mb-10 tracking-tight">Curriculum Detail</h3>
                 <div class="space-y-4">
-                    <input x-model="editingCourse.code" placeholder="Course Code (e.g. BUS701)" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
-                    <input x-model="editingCourse.name" placeholder="Full Course Title" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
+                    <input x-model="editingCourse.code" placeholder="Course Code" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all uppercase" />
+                    <input x-model="editingCourse.name" placeholder="Full Title" class="w-full bg-slate-50 p-5 rounded-2xl font-bold border-2 border-transparent outline-none focus:border-blue-500 focus:bg-white transition-all" />
                     <div class="flex gap-4 pt-8">
-                        <button @click="editingCourse = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Dismiss</button>
+                        <button @click="editingCourse = null" class="flex-1 bg-slate-100 py-5 rounded-3xl font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Cancel</button>
                         <button @click="saveCourse()" class="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">Save Changes</button>
                     </div>
                 </div>
@@ -432,78 +428,152 @@
         function attendX() {
             return {
                 activeView: 'overview',
+                selectedCohortName: 'MMBA 10',
                 selectedStudent: null,
                 editingStudent: null,
                 editingCourse: null,
-                menuItems: [
-                    { id: 'overview', label: 'Overview', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
-                    { id: 'courses', label: 'Curriculum', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>` },
-                    { id: 'registry', label: 'Participants', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
-                    { id: 'matrix', label: 'Session Log', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>` }
-                ],
-                cohorts: [
-                    { name: 'MMBA 10', avg: 85, bars: [40, 60, 45, 80, 55, 90, 30] },
-                    { name: 'MMBA 11', avg: 88, bars: [50, 40, 70, 60, 80, 45, 95] },
-                    { name: 'EMBA 30', avg: 81, bars: [30, 50, 40, 35, 60, 55, 40] },
-                    { name: 'EMBA 31', avg: 79, bars: [20, 35, 45, 60, 40, 30, 50] },
-                    { name: 'MEMBA 13', avg: 92, bars: [80, 90, 85, 95, 90, 88, 92] }
-                ],
-                students: [
-                    { id: 's1', matric: '24/MMBA/001', fname: 'Sarah', lname: 'Ade', cohort: 'MMBA 10', yield: 85 },
-                    { id: 's2', matric: '24/MMBA/002', fname: 'John', lname: 'Doe', cohort: 'MMBA 11', yield: 78 },
-                    { id: 's3', matric: '24/EMBA/105', fname: 'Michael', lname: 'Chen', cohort: 'EMBA 30', yield: 92 },
-                    { id: 's4', matric: '24/MEMBA/04', fname: 'Amara', lname: 'Okoro', cohort: 'MEMBA 13', yield: 95 }
-                ],
-                courses: [
-                    { id: 'c1', code: 'BUS701', name: 'Strategic Management' },
-                    { id: 'c2', code: 'FIN702', name: 'Corporate Finance' },
-                    { id: 'c3', code: 'MKT705', name: 'Digital Transformation' },
-                    { id: 'c4', code: 'ECO708', name: 'Managerial Economics' }
-                ],
                 
-                getViewTitle() {
-                    const titles = {
-                        'overview': 'Insights Dashboard',
-                        'courses': 'Course Management',
-                        'registry': 'Student Registry',
-                        'matrix': 'Attendance Matrix',
-                        'activate': 'Live Session'
-                    };
-                    return titles[this.activeView] || 'AttendX';
+                menuItems: [
+                    { id: 'overview', label: 'Overview', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>' },
+                    { id: 'registry', label: 'Registry', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+                    { id: 'matrix', label: 'Matrix', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>' },
+                    { id: 'courses', label: 'Courses', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' }
+                ],
+
+                cohorts: [
+                    { name: 'MMBA 10', avg: 88 },
+                    { name: 'MPP 04', avg: 74 },
+                    { name: 'EMBA 12', avg: 92 }
+                ],
+
+                courses: [
+                    { id: 1, code: 'BUS701', name: 'Strategic Management' },
+                    { id: 2, code: 'ECO705', name: 'Managerial Economics' },
+                    { id: 3, code: 'FIN712', name: 'Corporate Finance' },
+                    { id: 4, code: 'MKT708', name: 'Marketing Strategy' }
+                ],
+
+                attendanceRecords: [
+                    { courseId: 1, cohort: 'MMBA 10', physical: 45, virtual: 15 },
+                    { courseId: 2, cohort: 'MMBA 10', physical: 38, virtual: 22 },
+                    { courseId: 3, cohort: 'MMBA 10', physical: 50, virtual: 10 },
+                    { courseId: 4, cohort: 'MMBA 10', physical: 30, virtual: 25 },
+                    { courseId: 1, cohort: 'MPP 04', physical: 20, virtual: 30 },
+                    { courseId: 2, cohort: 'MPP 04', physical: 25, virtual: 35 },
+                    { courseId: 1, cohort: 'EMBA 12', physical: 60, virtual: 5 },
+                    { courseId: 2, cohort: 'EMBA 12', physical: 55, virtual: 10 }
+                ],
+
+                students: [
+                    { id: 1, fname: 'Sarah', lname: 'Johnson', matric: '24/MMBA/001', cohort: 'MMBA 10', yield: 95 },
+                    { id: 2, fname: 'Michael', lname: 'Chen', matric: '24/MMBA/002', cohort: 'MMBA 10', yield: 82 },
+                    { id: 3, fname: 'Aisha', lname: 'Bello', matric: '24/MPP/001', cohort: 'MPP 04', yield: 78 },
+                    { id: 4, fname: 'David', lname: 'Okonkwo', matric: '24/EMBA/012', cohort: 'EMBA 12', yield: 91 },
+                    { id: 5, fname: 'Elena', lname: 'Rodriguez', matric: '24/MMBA/003', cohort: 'MMBA 10', yield: 88 }
+                ],
+
+                getFilteredStudents() {
+                    return this.students.filter(s => s.cohort === this.selectedCohortName);
                 },
 
-                deleteStudent(id) { 
-                    if(confirm('Remove student from registry?')) {
-                        this.students = this.students.filter(s => s.id !== id); 
-                    }
+                getFilteredStats() {
+                    const records = this.attendanceRecords.filter(r => r.cohort === this.selectedCohortName);
+                    return {
+                        physicalTotal: records.reduce((sum, r) => sum + r.physical, 0),
+                        virtualTotal: records.reduce((sum, r) => sum + r.virtual, 0)
+                    };
                 },
-                
+
+                getCourseData() {
+                    const stats = this.getFilteredStats();
+                    const cohortRecords = this.attendanceRecords.filter(r => r.cohort === this.selectedCohortName);
+                    const max = Math.max(...cohortRecords.map(r => Math.max(r.physical, r.virtual)), 1);
+                    
+                    return this.courses.map(course => {
+                        const record = cohortRecords.find(r => r.courseId === course.id) || { physical: 0, virtual: 0 };
+                        return {
+                            ...course,
+                            physical: record.physical,
+                            virtual: record.virtual,
+                            physicalPerc: (record.physical / max) * 100,
+                            virtualPerc: (record.virtual / max) * 100
+                        };
+                    });
+                },
+
+                getViewTitle() {
+                    if (this.selectedStudent) return 'Student Profile';
+                    const map = { overview: 'Dashboard', registry: 'Registry', matrix: 'Attendance Matrix', courses: 'Curriculum', activate: 'Session Control' };
+                    return map[this.activeView];
+                },
+
+                // Template and Upload Logic
+                downloadTemplate() {
+                    const csv = "fname,lname,matric,cohort\nJohn,Doe,24/DEPT/001," + this.selectedCohortName;
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.setAttribute('href', url);
+                    a.setAttribute('download', 'attendx_template.csv');
+                    a.click();
+                },
+
+                handleBulkUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const text = e.target.result;
+                        const lines = text.split('\n');
+                        const header = lines[0].split(',');
+                        
+                        // Simple parser for CSV
+                        for (let i = 1; i < lines.length; i++) {
+                            const data = lines[i].split(',');
+                            if (data.length >= 4) {
+                                this.students.push({
+                                    id: Date.now() + i,
+                                    fname: data[0].trim(),
+                                    lname: data[1].trim(),
+                                    matric: data[2].trim(),
+                                    cohort: data[3].trim(),
+                                    yield: Math.floor(Math.random() * 100)
+                                });
+                            }
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+
                 saveStudent() {
-                    if(!this.editingStudent.fname || !this.editingStudent.matric) return;
-                    const idx = this.students.findIndex(s => s.id === this.editingStudent.id);
-                    if (idx !== -1) {
-                        this.students[idx] = { ...this.editingStudent };
+                    if (!this.editingStudent.fname || !this.editingStudent.lname) return;
+                    const index = this.students.findIndex(s => s.id === this.editingStudent.id);
+                    if (index > -1) {
+                        this.students[index] = { ...this.editingStudent };
                     } else {
                         this.students.push({ ...this.editingStudent });
                     }
                     this.editingStudent = null;
                 },
 
-                deleteCourse(id) { 
-                    if(confirm('Delete course from curriculum?')) {
-                        this.courses = this.courses.filter(c => c.id !== id); 
-                    }
+                deleteStudent(id) {
+                    this.students = this.students.filter(s => s.id !== id);
                 },
 
                 saveCourse() {
-                    if(!this.editingCourse.name || !this.editingCourse.code) return;
-                    const idx = this.courses.findIndex(c => c.id === this.editingCourse.id);
-                    if (idx !== -1) {
-                        this.courses[idx] = { ...this.editingCourse };
+                    if (!this.editingCourse.name || !this.editingCourse.code) return;
+                    const index = this.courses.findIndex(c => c.id === this.editingCourse.id);
+                    if (index > -1) {
+                        this.courses[index] = { ...this.editingCourse };
                     } else {
                         this.courses.push({ ...this.editingCourse });
                     }
                     this.editingCourse = null;
+                },
+
+                deleteCourse(id) {
+                    this.courses = this.courses.filter(c => c.id !== id);
                 }
             }
         }
